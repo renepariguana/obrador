@@ -5,3 +5,4 @@ dist/
 .next/
 .expo/
 supabase/.temp/
+next-env.d.ts
