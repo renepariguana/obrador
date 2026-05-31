@@ -5,11 +5,13 @@ import { createClient } from '@/lib/supabase/server'
 import { adminClient } from '@/lib/supabase/admin'
 import type { UserRole } from '@manos/shared'
 
+const VALID_ROLES: UserRole[] = ['cliente', 'trabajador', 'proveedor']
+
 export async function register(prevState: { error: string } | null, formData: FormData) {
-  const email = formData.get('email') as string
-  const password = formData.get('password') as string
-  const nombre = formData.get('nombre') as string
-  const rol = formData.get('rol') as UserRole
+  const email = (formData.get('email') as string) ?? ''
+  const password = (formData.get('password') as string) ?? ''
+  const nombre = (formData.get('nombre') as string) ?? ''
+  const rol = (formData.get('rol') as string) ?? ''
 
   if (!email || !password || !nombre || !rol) {
     return { error: 'Todos los campos son requeridos.' }
@@ -17,6 +19,10 @@ export async function register(prevState: { error: string } | null, formData: Fo
 
   if (password.length < 6) {
     return { error: 'La contraseña debe tener al menos 6 caracteres.' }
+  }
+
+  if (!VALID_ROLES.includes(rol as UserRole)) {
+    return { error: 'Rol inválido.' }
   }
 
   const supabase = await createClient()
@@ -35,10 +41,12 @@ export async function register(prevState: { error: string } | null, formData: Fo
     auth_id: data.user.id,
     email,
     nombre,
-    rol,
+    rol: rol as UserRole,
   })
 
   if (insertError) {
+    // Compensating action: remove the auth user to avoid orphaned records
+    await adminClient.auth.admin.deleteUser(data.user.id)
     return { error: insertError.message }
   }
 
@@ -46,8 +54,8 @@ export async function register(prevState: { error: string } | null, formData: Fo
 }
 
 export async function login(prevState: { error: string } | null, formData: FormData) {
-  const email = formData.get('email') as string
-  const password = formData.get('password') as string
+  const email = (formData.get('email') as string) ?? ''
+  const password = (formData.get('password') as string) ?? ''
 
   if (!email || !password) {
     return { error: 'Email y contraseña son requeridos.' }
