@@ -3,7 +3,15 @@ import { View, Text } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme } from '../lib/theme'
 
-export function AppHeader({ title, right }: { title: string; right?: React.ReactNode }) {
+export function AppHeader({
+  title,
+  left,
+  right,
+}: {
+  title?: string
+  left?: React.ReactNode
+  right?: React.ReactNode
+}) {
   const t = useTheme()
   const insets = useSafeAreaInsets()
   return (
@@ -18,7 +26,9 @@ export function AppHeader({ title, right }: { title: string; right?: React.React
         justifyContent: 'space-between',
       }}
     >
-      <Text style={{ color: t.onPrimary, fontSize: 20, fontWeight: '900', letterSpacing: -0.4 }}>{title}</Text>
+      {left ?? (
+        <Text style={{ color: t.onPrimary, fontSize: 20, fontWeight: '900', letterSpacing: -0.4 }}>{title}</Text>
+      )}
       {right}
     </View>
   )
