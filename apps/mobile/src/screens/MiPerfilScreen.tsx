@@ -4,6 +4,7 @@ import { AppHeader } from '../components/AppHeader'
 import { Icon, IconName } from '../components/Icon'
 import { useTheme, spacing, radius, Theme } from '../lib/theme'
 import { useZona } from '../lib/zona'
+import { useAuth } from '../lib/auth'
 
 const ICONO_RUBRO: Record<string, IconName> = {
   Albañil: 'wall',
@@ -22,6 +23,7 @@ export default function MiPerfilScreen() {
   const t = useTheme()
   const s = styles(t)
   const { zona } = useZona()
+  const { cerrarSesion, logueado, irLogin } = useAuth()
   const [verificado] = useState(false)
   const rubro = 'Plomero' // rubro principal del trabajador
 
@@ -34,6 +36,26 @@ export default function MiPerfilScreen() {
       <Icon name="chevron" size={18} color={t.text3} />
     </Pressable>
   )
+
+  if (!logueado) {
+    return (
+      <View style={{ flex: 1, backgroundColor: t.bg }}>
+        <AppHeader title="Mi perfil" />
+        <View style={s.guestWrap}>
+          <View style={s.guestIcon}>
+            <Icon name="user" size={44} color={t.text3} />
+          </View>
+          <Text style={s.guestTitle}>Ingresá a tu cuenta</Text>
+          <Text style={s.guestText}>
+            Creá tu perfil para publicar pedidos, postularte a trabajos y sumar puntos.
+          </Text>
+          <Pressable style={s.guestBtn} onPress={irLogin}>
+            <Text style={s.guestBtnTxt}>Ingresar</Text>
+          </Pressable>
+        </View>
+      </View>
+    )
+  }
 
   return (
     <View style={{ flex: 1, backgroundColor: t.bg }}>
@@ -120,7 +142,7 @@ export default function MiPerfilScreen() {
 
         {/* Sesión */}
         <View style={[s.group, { marginTop: spacing.lg }]}>
-          <Row icon="logout" label="Cerrar sesión" />
+          <Row icon="logout" label="Cerrar sesión" onPress={cerrarSesion} />
           <Row icon="trash" label="Borrar cuenta" danger />
         </View>
       </ScrollView>
@@ -130,6 +152,12 @@ export default function MiPerfilScreen() {
 
 const styles = (t: Theme) =>
   StyleSheet.create({
+    guestWrap: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: spacing.xl },
+    guestIcon: { width: 88, height: 88, borderRadius: 44, backgroundColor: t.surface2, alignItems: 'center', justifyContent: 'center' },
+    guestTitle: { color: t.text, fontSize: 20, fontWeight: '900', marginTop: spacing.lg },
+    guestText: { color: t.text2, fontSize: 14, textAlign: 'center', marginTop: spacing.sm, lineHeight: 20 },
+    guestBtn: { marginTop: spacing.xl, height: 52, borderRadius: radius.md, backgroundColor: t.primary, paddingHorizontal: spacing.xl * 1.5, alignItems: 'center', justifyContent: 'center' },
+    guestBtnTxt: { color: t.onPrimary, fontSize: 16, fontWeight: '800' },
     profile: { alignItems: 'center', paddingTop: spacing.lg, paddingHorizontal: spacing.lg },
     avatarWrap: { width: 84, height: 84 },
     avatar: {

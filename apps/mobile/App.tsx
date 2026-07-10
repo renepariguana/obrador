@@ -13,10 +13,12 @@ import MaterialesScreen from './src/screens/MaterialesScreen'
 import TrabajosScreen from './src/screens/TrabajosScreen'
 import PedidosScreen from './src/screens/PedidosScreen'
 import MiPerfilScreen from './src/screens/MiPerfilScreen'
-import { ConfirmarUbicacion } from './src/components/ConfirmarUbicacion'
+import LoginScreen from './src/screens/LoginScreen'
+import UbicacionScreen from './src/screens/UbicacionScreen'
 import { Icon, IconName } from './src/components/Icon'
 import { useTheme } from './src/lib/theme'
 import { ZonaProvider, useZona } from './src/lib/zona'
+import { AuthProvider, useAuth } from './src/lib/auth'
 
 const Tab = createBottomTabNavigator()
 const Stack = createNativeStackNavigator()
@@ -76,31 +78,41 @@ function RootTabs() {
 
 function Root() {
   const scheme = useColorScheme()
-  const { setZona } = useZona()
-  const [zonaConfirmada, setZonaConfirmada] = useState(false)
-  return (
-    <>
-      <NavigationContainer theme={scheme === 'dark' ? DarkTheme : DefaultTheme}>
+  const { paso } = useAuth()
+
+  if (paso === 'ubicacion') {
+    return (
+      <>
         <StatusBar style="dark" />
-        <RootTabs />
-      </NavigationContainer>
-      <ConfirmarUbicacion
-        visible={!zonaConfirmada}
-        onConfirm={(z) => {
-          if (z) setZona(z)
-          setZonaConfirmada(true)
-        }}
-      />
-    </>
+        <UbicacionScreen />
+      </>
+    )
+  }
+  if (paso === 'login') {
+    return (
+      <>
+        <StatusBar style="dark" />
+        <LoginScreen />
+      </>
+    )
+  }
+
+  return (
+    <NavigationContainer theme={scheme === 'dark' ? DarkTheme : DefaultTheme}>
+      <StatusBar style="dark" />
+      <RootTabs />
+    </NavigationContainer>
   )
 }
 
 export default function App() {
   return (
     <SafeAreaProvider>
-      <ZonaProvider>
-        <Root />
-      </ZonaProvider>
+      <AuthProvider>
+        <ZonaProvider>
+          <Root />
+        </ZonaProvider>
+      </AuthProvider>
     </SafeAreaProvider>
   )
 }
