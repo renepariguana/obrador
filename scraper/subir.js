@@ -61,6 +61,18 @@ function normalizarCategoria(cat, nombre) {
   return 'Otros'
 }
 
+// Subcategoría = primera palabra del nombre, sin acentos, Título.
+// (Liston = Listón, LADRILLO = Ladrillo) — para agrupar entre proveedores.
+function primeraPalabra(nombre) {
+  let w = (nombre || '').trim().split(/\s+/)[0] || ''
+  w = w
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/[^A-Za-z]/g, '')
+  if (!w) return null
+  return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()
+}
+
 async function main() {
   const { data: provs, error: e1 } = await sb.from('proveedores').select('id,slug')
   if (e1) {
@@ -89,8 +101,8 @@ async function main() {
       filas.push({
         provincia: PROVINCIA,
         proveedor_id,
-        categoria: categoria || null,
-        subcategoria: subcategoria || null,
+        categoria: categoria || null, // categoría cruda del proveedor (referencia)
+        subcategoria: primeraPalabra(nombre), // primera palabra (agrupa entre proveedores)
         categoria_norm: normalizarCategoria(categoria, nombre),
         nombre,
         precio,
