@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { NavigationContainer, DefaultTheme, DarkTheme } from '@react-navigation/native'
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -10,6 +10,7 @@ import MaterialesScreen from './src/screens/MaterialesScreen'
 import TrabajosScreen from './src/screens/TrabajosScreen'
 import ProveedoresScreen from './src/screens/ProveedoresScreen'
 import MiPerfilScreen from './src/screens/MiPerfilScreen'
+import { ConfirmarUbicacion } from './src/components/ConfirmarUbicacion'
 import { Icon, IconName } from './src/components/Icon'
 import { useTheme } from './src/lib/theme'
 
@@ -60,12 +61,14 @@ function RootTabs() {
 
 export default function App() {
   const scheme = useColorScheme()
+  const [zonaConfirmada, setZonaConfirmada] = useState(false)
   return (
     <SafeAreaProvider>
       <NavigationContainer theme={scheme === 'dark' ? DarkTheme : DefaultTheme}>
         <StatusBar style="dark" />
         <RootTabs />
       </NavigationContainer>
+      <ConfirmarUbicacion visible={!zonaConfirmada} onConfirm={() => setZonaConfirmada(true)} />
     </SafeAreaProvider>
   )
 }
