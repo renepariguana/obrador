@@ -17,6 +17,7 @@ import MiPerfilScreen from './src/screens/MiPerfilScreen'
 import LoginScreen from './src/screens/LoginScreen'
 import UbicacionScreen from './src/screens/UbicacionScreen'
 import { Icon, IconName } from './src/components/Icon'
+import { LogoManos } from './src/components/LogoManos'
 import { useTheme } from './src/lib/theme'
 import { ZonaProvider, useZona } from './src/lib/zona'
 import { AuthProvider, useAuth } from './src/lib/auth'
@@ -78,7 +79,12 @@ function RootTabs() {
           name={tab.name}
           component={tab.comp}
           options={{
-            tabBarIcon: ({ color }) => <Icon name={tab.icon} size={22} color={color} />,
+            tabBarIcon: ({ color }) =>
+              tab.name === 'Cotizar' ? (
+                <LogoManos size={30} color={color} />
+              ) : (
+                <Icon name={tab.icon} size={22} color={color} />
+              ),
           }}
         />
       ))}
