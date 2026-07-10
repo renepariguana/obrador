@@ -1,0 +1,13 @@
+{
+  "name": "manos-scraper",
+  "version": "1.0.0",
+  "private": true,
+  "type": "commonjs",
+  "scripts": {
+    "subir": "node subir.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.110.0",
+    "dotenv": "^16.4.5"
+  }
+}

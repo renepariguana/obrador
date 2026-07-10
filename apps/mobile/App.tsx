@@ -45,7 +45,7 @@ function TrabajosStack() {
 
 const TABS: { name: string; comp: React.ComponentType; icon: IconName }[] = [
   { name: 'Inicio', comp: InicioStack, icon: 'home' },
-  { name: 'Materiales', comp: MaterialesScreen, icon: 'box' },
+  { name: 'Cotizar', comp: MaterialesScreen, icon: 'coin' },
   { name: 'Trabajos', comp: TrabajosStack, icon: 'hand' },
   { name: 'Pedidos', comp: PedidosScreen, icon: 'chat' },
   { name: 'Mi perfil', comp: MiPerfilScreen, icon: 'user' },
