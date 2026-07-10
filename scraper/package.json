@@ -4,10 +4,12 @@
   "private": true,
   "type": "commonjs",
   "scripts": {
-    "subir": "node subir.js"
+    "subir": "node subir.js",
+    "sync": "node sync-sheet.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.110.0",
-    "dotenv": "^16.4.5"
+    "dotenv": "^16.4.5",
+    "googleapis": "^172.0.0"
   }
 }

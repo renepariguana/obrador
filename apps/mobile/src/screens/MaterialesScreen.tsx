@@ -85,8 +85,8 @@ export default function MaterialesScreen() {
                   {m.nombre}
                 </Text>
                 <View style={s.metaRow}>
-                  <View style={[s.fuente, m.fuente === 'easy' ? s.fEasy : s.fEmi]}>
-                    <Text style={s.fuenteTxt}>{m.fuente === 'easy' ? 'Easy' : 'EMI'}</Text>
+                  <View style={s.prov}>
+                    <Text style={s.provTxt}>{m.proveedor}</Text>
                   </View>
                   {m.categoria && (
                     <Text style={s.cat} numberOfLines={1}>
@@ -153,10 +153,8 @@ const styles = (t: Theme) =>
     },
     nombre: { color: t.text, fontSize: 14, fontWeight: '700', lineHeight: 19 },
     metaRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginTop: 6 },
-    fuente: { borderRadius: radius.sm, paddingHorizontal: 7, paddingVertical: 2 },
-    fEasy: { backgroundColor: 'rgba(46,125,247,0.14)' },
-    fEmi: { backgroundColor: 'rgba(199,54,43,0.12)' },
-    fuenteTxt: { fontSize: 10, fontWeight: '800', color: t.text2 },
+    prov: { backgroundColor: t.surface2, borderRadius: radius.sm, paddingHorizontal: 7, paddingVertical: 2 },
+    provTxt: { fontSize: 10, fontWeight: '800', color: t.text2 },
     cat: { color: t.text3, fontSize: 11, flexShrink: 1 },
     precioBox: { alignItems: 'flex-end', gap: 2 },
     precio: { color: t.text, fontSize: 16, fontWeight: '900' },

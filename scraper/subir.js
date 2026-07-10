@@ -1,5 +1,5 @@
-// Sube a Supabase (tabla materiales) las filas ya scrapeadas de Easy y EMI.
-// Reusa los JSON del proyecto Presupuestador. Tagea provincia = Tucumán.
+// Sube a Supabase (tabla materiales) las filas scrapeadas de Easy/EMI.
+// Resuelve proveedor_id (tabla proveedores) y asigna categoría normalizada.
 // Uso: node subir.js
 require('dotenv').config()
 const fs = require('fs')
@@ -14,16 +14,20 @@ if (!URL || !KEY) {
 }
 const sb = createClient(URL, KEY, { auth: { persistSession: false } })
 
-// Carpeta con los JSON scrapeados del proyecto Presupuestador
 const PRES = path.resolve(__dirname, '../../Presupuestador/scrapers')
 const PROVINCIA = 'Tucumán'
 
-// Easy: precio es número crudo ("$8450" o "$8450.5" → punto decimal).
-// EMI: formato argentino ("$42.307" → punto = miles, coma = decimales).
-function parsePrecio(str, fuente) {
+// Qué archivo scrapeado corresponde a cada proveedor (por slug)
+const FUENTES = [
+  { slug: 'easy', archivo: 'easy-rows.json', formato: 'easy' },
+  { slug: 'emi', archivo: 'emi-rows.json', formato: 'emi' },
+]
+
+// Easy: número crudo (punto decimal). EMI: formato AR (punto miles, coma decimales).
+function parsePrecio(str, formato) {
   if (str == null) return null
   let t = String(str).replace('$', '').trim()
-  if (fuente === 'emi') {
+  if (formato === 'emi') {
     if (t.includes(',')) t = t.replace(/\./g, '').replace(',', '.')
     else t = t.replace(/\./g, '')
   } else {
@@ -33,46 +37,88 @@ function parsePrecio(str, fuente) {
   return isNaN(n) ? null : n
 }
 
-function filasDe(archivo, fuente) {
-  const p = path.join(PRES, archivo)
-  if (!fs.existsSync(p)) {
-    console.warn('  ⚠️ no existe', p)
-    return []
-  }
-  const data = JSON.parse(fs.readFileSync(p, 'utf8'))
-  return data
-    .map((r) => {
-      const [categoria, subcategoria, nombre, precioStr, url] = r
-      const precio = parsePrecio(precioStr, fuente)
-      if (!nombre || precio == null || !url) return null
-      return { provincia: PROVINCIA, fuente, categoria: categoria || null, subcategoria: subcategoria || null, nombre, precio, url }
-    })
-    .filter(Boolean)
+// Taxonomía propia: mapea (nombre + categoría del proveedor) → categoría normalizada.
+const CANON = [
+  ['Cemento y cales', /cement|\bcal\b|cal hidra|hormig/i],
+  ['Áridos', /arena|piedra|ripio|árido|arido|granza|canto rodado/i],
+  ['Ladrillos y bloques', /ladrillo|bloque|adoqu|premoldeado/i],
+  ['Hierro y aceros', /hierro|acero|varilla|malla sima|clavo|alambre|perfil|caño estructural/i],
+  ['Maderas', /madera|\btabla\b|listón|machimbre|fenólico|\bosb\b|terciad|tirante/i],
+  ['Pinturas', /pintura|látex|latex|esmalte|enduido|barniz|imprimac|fijador|rodillo|pincel/i],
+  ['Sanitarios y grifería', /inodoro|bidet|griferí|griferia|canilla|lavatorio|sanitari|ducha|mochila|dep[oó]sito|bacha/i],
+  ['Plomería', /caño|cañería|\bpvc\b|\bppr\b|\bcodo\b|cupla|conexión|termofusi|cloacal|desag[üu]/i],
+  ['Electricidad', /cable|térmica|disyuntor|tomacorriente|interruptor|el[eé]ctric|l[aá]mpara|\bled\b|\bfoco\b|tablero|conduit/i],
+  ['Aberturas', /puerta|ventana|abertura|\bmarco\b|postigo|celosía|\breja\b/i],
+  ['Techos y membranas', /membrana|\bteja\b|\bchapa\b|\btecho\b|zinguer|cumbrera|policarbonato/i],
+  ['Revestimientos y pisos', /cer[aá]mic|porcelanato|\bpiso\b|revestimiento|z[oó]calo|pastina|pegamento/i],
+  ['Herramientas', /taladro|amoladora|herramienta|martillo|pinza|destornillad|\bnivel\b|sierra|\bdisco\b/i],
+  ['Ferretería', /tornillo|bul[oó]n|tuerca|arandela|bisagra|cerradura|candado|ferreter|tarugo|grampa/i],
+  ['Aislantes', /aislante|lana de vidrio|poliestireno|telgopor|espuma/i],
+]
+function normalizarCategoria(cat, nombre) {
+  const t = ((nombre || '') + ' ' + (cat || '')).toLowerCase()
+  for (const [name, re] of CANON) if (re.test(t)) return name
+  return 'Otros'
 }
 
 async function main() {
-  const todas = [...filasDe('easy-rows.json', 'easy'), ...filasDe('emi-rows.json', 'emi')]
-  // dedupe por (fuente,provincia,url) para no chocar el ON CONFLICT dentro del mismo batch
+  const { data: provs, error: e1 } = await sb.from('proveedores').select('id,slug')
+  if (e1) {
+    console.error('Error leyendo proveedores:', e1.message)
+    process.exit(1)
+  }
+  const idPorSlug = Object.fromEntries((provs || []).map((p) => [p.slug, p.id]))
+
+  const filas = []
+  for (const f of FUENTES) {
+    const proveedor_id = idPorSlug[f.slug]
+    if (!proveedor_id) {
+      console.warn(`  ⚠️ proveedor "${f.slug}" no está en la tabla proveedores`)
+      continue
+    }
+    const p = path.join(PRES, f.archivo)
+    if (!fs.existsSync(p)) {
+      console.warn('  ⚠️ no existe', p)
+      continue
+    }
+    const data = JSON.parse(fs.readFileSync(p, 'utf8'))
+    data.forEach((r) => {
+      const [categoria, subcategoria, nombre, precioStr, url] = r
+      const precio = parsePrecio(precioStr, f.formato)
+      if (!nombre || precio == null || !url) return
+      filas.push({
+        provincia: PROVINCIA,
+        proveedor_id,
+        categoria: categoria || null,
+        subcategoria: subcategoria || null,
+        categoria_norm: normalizarCategoria(categoria, nombre),
+        nombre,
+        precio,
+        url,
+      })
+    })
+  }
+
+  // dedupe por (proveedor_id, provincia, url)
   const seen = new Set()
-  const filas = todas.filter((r) => {
-    const k = r.fuente + '|' + r.provincia + '|' + r.url
+  const u = filas.filter((r) => {
+    const k = r.proveedor_id + '|' + r.provincia + '|' + r.url
     if (seen.has(k)) return false
     seen.add(k)
     return true
   })
-  console.log(`Filas: ${todas.length} → únicas: ${filas.length}`)
+  console.log(`Filas: ${filas.length} → únicas: ${u.length}`)
 
   const CHUNK = 500
-  for (let i = 0; i < filas.length; i += CHUNK) {
-    const batch = filas.slice(i, i + CHUNK)
-    const { error } = await sb.from('materiales').upsert(batch, { onConflict: 'fuente,provincia,url' })
+  for (let i = 0; i < u.length; i += CHUNK) {
+    const { error } = await sb.from('materiales').upsert(u.slice(i, i + CHUNK), { onConflict: 'proveedor_id,provincia,url' })
     if (error) {
       console.error('\n❌ Error en batch', i, '→', error.message)
       process.exit(1)
     }
-    process.stdout.write(`  subidas ${Math.min(i + CHUNK, filas.length)}/${filas.length}\r`)
+    process.stdout.write(`  subidas ${Math.min(i + CHUNK, u.length)}/${u.length}\r`)
   }
-  console.log('\n✅ Listo — materiales subidos a Supabase')
+  console.log('\n✅ Listo — materiales actualizados (proveedor + categoría normalizada)')
 }
 
 main().catch((e) => {
