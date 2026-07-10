@@ -1,22 +1,37 @@
-import React, { useState } from 'react'
-import { View, Text, TextInput, Pressable, ScrollView, StyleSheet } from 'react-native'
+import React, { useRef, useState } from 'react'
+import { View, Text, TextInput, Pressable, ScrollView, StyleSheet, Dimensions } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { MapaPedidos } from '../components/MapaPedidos'
 import { Icon } from '../components/Icon'
 import { useTheme, spacing, radius, Theme } from '../lib/theme'
+import { PEDIDOS } from '../data/pedidos'
 
 const FILTROS = ['Todos', 'Mi rubro', 'Urgentes', 'Hoy']
+const { width } = Dimensions.get('window')
 
 export default function TrabajosScreen() {
   const t = useTheme()
   const insets = useSafeAreaInsets()
   const s = styles(t)
   const [filtro, setFiltro] = useState('Todos')
+  const [sel, setSel] = useState(0)
+  const scrollRef = useRef<ScrollView>(null)
+
+  // Tocaste un globo en el mapa → mover el carrusel a ese pedido
+  const onMapSelect = (i: number) => {
+    setSel(i)
+    scrollRef.current?.scrollTo({ x: i * width, animated: true })
+  }
+
+  // Deslizaste el carrusel → seleccionar ese pedido (el mapa lo pinta de ámbar)
+  const onCardScroll = (x: number) => {
+    const i = Math.max(0, Math.min(PEDIDOS.length - 1, Math.round(x / width)))
+    if (i !== sel) setSel(i)
+  }
 
   return (
     <View style={{ flex: 1, backgroundColor: t.bg }}>
-      {/* Mapa a pantalla completa */}
-      <MapaPedidos fill />
+      <MapaPedidos fill selected={sel} onSelect={onMapSelect} />
 
       {/* ===== Overlays superiores ===== */}
       <View style={[s.top, { paddingTop: insets.top + 8 }]} pointerEvents="box-none">
@@ -37,7 +52,7 @@ export default function TrabajosScreen() {
         <View style={s.livePill}>
           <View style={s.liveDot} />
           <Text style={s.liveBold}>En vivo</Text>
-          <Text style={s.liveSub}>· 5 pedidos cerca tuyo</Text>
+          <Text style={s.liveSub}>· {PEDIDOS.length} pedidos cerca tuyo</Text>
         </View>
 
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.chips}>
@@ -52,41 +67,63 @@ export default function TrabajosScreen() {
         </ScrollView>
       </View>
 
-      {/* ===== Tarjeta de detalle (pedido seleccionado) ===== */}
-      <View style={s.bottom} pointerEvents="box-none">
-        <View style={s.detail}>
-          <View style={s.detailHead}>
-            <View style={s.avatar}>
-              <Icon name="user" size={22} color={t.text3} />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={s.detailName}>María E. necesita un Plomero</Text>
-              <Text style={s.detailMeta}>A 0,6 km · San Miguel de Tucumán</Text>
-            </View>
-            <View style={s.tag}>
-              <Text style={s.tagTxt}>Plomería</Text>
-            </View>
-          </View>
+      {/* ===== Carrusel de pedidos (deslizable) ===== */}
+      <View style={[s.bottom, { paddingBottom: insets.bottom }]} pointerEvents="box-none">
+        <ScrollView
+          ref={scrollRef}
+          horizontal
+          pagingEnabled
+          showsHorizontalScrollIndicator={false}
+          onMomentumScrollEnd={(e) => onCardScroll(e.nativeEvent.contentOffset.x)}
+        >
+          {PEDIDOS.map((p) => (
+            <View key={p.id} style={{ width, paddingHorizontal: spacing.md }}>
+              <View style={s.detail}>
+                <View style={s.detailHead}>
+                  <View style={s.avatar}>
+                    <Icon name="user" size={22} color={t.text3} />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={s.detailName}>
+                      {p.cliente} necesita un {p.oficio}
+                    </Text>
+                    <Text style={s.detailMeta}>
+                      A {p.dist} · {p.zona}
+                    </Text>
+                  </View>
+                  <View style={s.tag}>
+                    <Text style={s.tagTxt}>{p.tag}</Text>
+                  </View>
+                </View>
 
-          <Text style={s.quote}>
-            “Tengo una pérdida de agua debajo de la pileta de la cocina, necesito que la revisen hoy
-            si se puede.”
-          </Text>
+                <Text style={s.quote}>“{p.quote}”</Text>
 
-          <View style={s.detailFoot}>
-            <Icon name="clock" size={14} color={t.text3} />
-            <Text style={s.footText}>hace 5 min · 2 postulados</Text>
-          </View>
+                <View style={s.detailFoot}>
+                  <Icon name="clock" size={14} color={t.text3} />
+                  <Text style={s.footText}>
+                    {p.hace} · {p.postulados} postulados
+                  </Text>
+                </View>
 
-          <View style={s.actions}>
-            <Pressable style={s.btnGhost}>
-              <Text style={s.btnGhostTxt}>Ver detalle</Text>
-            </Pressable>
-            <Pressable style={s.btnPrimary}>
-              <Icon name="check" size={18} color={t.onPrimary} />
-              <Text style={s.btnPrimaryTxt}>Postularme</Text>
-            </Pressable>
-          </View>
+                <View style={s.actions}>
+                  <Pressable style={s.btnGhost}>
+                    <Text style={s.btnGhostTxt}>Ver detalle</Text>
+                  </Pressable>
+                  <Pressable style={s.btnPrimary}>
+                    <Icon name="check" size={18} color={t.onPrimary} />
+                    <Text style={s.btnPrimaryTxt}>Postularme</Text>
+                  </Pressable>
+                </View>
+              </View>
+            </View>
+          ))}
+        </ScrollView>
+
+        {/* Puntitos */}
+        <View style={s.dots}>
+          {PEDIDOS.map((p, i) => (
+            <View key={p.id} style={[s.dot, i === sel && s.dotOn]} />
+          ))}
         </View>
       </View>
     </View>
@@ -160,7 +197,7 @@ const styles = (t: Theme) =>
     chipOn: { backgroundColor: t.primary },
     chipTxt: { color: t.text2, fontWeight: '700', fontSize: 13 },
     chipTxtOn: { color: t.onPrimary },
-    bottom: { position: 'absolute', left: 0, right: 0, bottom: 0, padding: spacing.md },
+    bottom: { position: 'absolute', left: 0, right: 0, bottom: 0 },
     detail: {
       backgroundColor: t.surface,
       borderRadius: radius.lg,
@@ -208,4 +245,7 @@ const styles = (t: Theme) =>
       justifyContent: 'center',
     },
     btnPrimaryTxt: { color: t.onPrimary, fontWeight: '800', fontSize: 15 },
+    dots: { flexDirection: 'row', gap: 6, justifyContent: 'center', marginTop: spacing.sm, paddingBottom: spacing.sm },
+    dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: t.border },
+    dotOn: { width: 18, backgroundColor: t.primary },
   })

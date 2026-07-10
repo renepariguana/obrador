@@ -1,25 +1,13 @@
-import React from 'react'
+import React, { useRef, useEffect } from 'react'
 import { View, Text, StyleSheet } from 'react-native'
 import { WebView } from 'react-native-webview'
 import { useTheme } from '../lib/theme'
+import { PEDIDOS } from '../data/pedidos'
 
 // La API key va en .env (EXPO_PUBLIC_GOOGLE_MAPS_JS_KEY) — nunca hardcodeada.
 const GOOGLE_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_JS_KEY ?? ''
 
-// Pedidos de ejemplo (más adelante vienen de Supabase, filtrados por zona).
-// `min` = zoom mínimo para que el globo aparezca. Los destacados tienen min bajo
-// (se ven aunque estés alejado); el resto aparece a medida que hacés zoom.
-const PEDIDOS = [
-  { lat: -26.822, lng: -65.2225, oficio: 'Plomero', desc: 'Pérdida en la cocina', sel: true, min: 13 },
-  { lat: -26.8185, lng: -65.2255, oficio: 'Electricista', desc: 'Se cortó la luz', sel: false, min: 13 },
-  { lat: -26.8205, lng: -65.2155, oficio: 'Albañil', desc: 'Levantar pared', sel: false, min: 14 },
-  { lat: -26.8245, lng: -65.2135, oficio: 'Pintor', desc: 'Pintar living', sel: false, min: 15 },
-  { lat: -26.8285, lng: -65.226, oficio: 'Gasista', desc: 'Revisar estufa', sel: false, min: 15 },
-  { lat: -26.8165, lng: -65.219, oficio: 'Carpintero', desc: 'Arreglar puerta', sel: false, min: 16 },
-  { lat: -26.826, lng: -65.212, oficio: 'Herrero', desc: 'Reja de balcón', sel: false, min: 16 },
-  { lat: -26.8305, lng: -65.221, oficio: 'Durlero', desc: 'Cielorraso', sel: false, min: 16 },
-  { lat: -26.815, lng: -65.2235, oficio: 'Pintor', desc: 'Frente de casa', sel: false, min: 15 },
-]
+const MARKERS = PEDIDOS.map((p) => ({ lat: p.lat, lng: p.lng, oficio: p.oficio, desc: p.desc, min: p.min }))
 
 const PERSON_SVG =
   '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#6B7280" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>'
@@ -36,7 +24,7 @@ const html = (key: string) => `<!DOCTYPE html>
   .bubble .ico{width:22px;height:22px;border-radius:50%;background:#F1F2F4;display:flex;align-items:center;justify-content:center;flex:0 0 auto;}
   .bubble .oficio{display:block;font:800 12px -apple-system,system-ui,sans-serif;color:#16181D;line-height:14px;}
   .bubble .desc{display:block;font:600 10px -apple-system,system-ui,sans-serif;color:#8A9099;line-height:12px;margin-top:1px;}
-  .bubble.sel{background:#FFBF00;}
+  .bubble.sel{background:#FFBF00;z-index:9999;}
   .bubble.sel::after{border-top-color:#FFBF00;}
   .bubble.sel .ico{background:rgba(0,0,0,.12);}
   .bubble.sel .ico svg{stroke:#1A1A1A;}
@@ -47,44 +35,65 @@ const html = (key: string) => `<!DOCTYPE html>
 <body>
 <div id="map"></div>
 <script>
-  const PEDIDOS = ${JSON.stringify(PEDIDOS)};
+  const PEDIDOS = ${JSON.stringify(MARKERS)};
   const CENTER = { lat: -26.8241, lng: -65.2226 };
   const ICO = '${PERSON_SVG}';
+  var markers = [], sel = 0, map;
+  function post(i){ if (window.ReactNativeWebView) window.ReactNativeWebView.postMessage(String(i)); }
+  function refresh(){
+    if (!map) return;
+    var z = map.getZoom();
+    markers.forEach(function(mm, idx){ mm.marker.map = (z >= mm.min || idx === sel) ? map : null; });
+  }
+  window.selectPedido = function(i){
+    sel = i;
+    markers.forEach(function(mm, idx){ mm.el.classList.toggle('sel', idx === i); });
+    refresh();
+    if (map && PEDIDOS[i]) map.panTo({ lat: PEDIDOS[i].lat, lng: PEDIDOS[i].lng });
+  };
   function initMap(){
-    const map = new google.maps.Map(document.getElementById('map'), {
-      center: CENTER, zoom: 14, disableDefaultUI: true, mapId: 'DEMO_MAP_ID', clickableIcons: false,
+    map = new google.maps.Map(document.getElementById('map'), {
+      center: CENTER, zoom: 15, disableDefaultUI: true, mapId: 'DEMO_MAP_ID', clickableIcons: false,
     });
-    const meEl = document.createElement('div'); meEl.className = 'me';
+    var meEl = document.createElement('div'); meEl.className = 'me';
     new google.maps.marker.AdvancedMarkerElement({ map, position: CENTER, content: meEl });
-
-    const markers = PEDIDOS.map(function(p){
-      const el = document.createElement('div');
-      el.className = 'bubble' + (p.sel ? ' sel' : '');
+    markers = PEDIDOS.map(function(p, idx){
+      var el = document.createElement('div');
+      el.className = 'bubble';
       el.innerHTML = '<span class="ico">'+ICO+'</span><span><span class="oficio">'+p.oficio+'</span><span class="desc">'+p.desc+'</span></span>';
-      el.addEventListener('click', function(){
-        markers.forEach(function(mm){ mm.el.classList.remove('sel'); });
-        el.classList.add('sel');
-      });
-      const m = new google.maps.marker.AdvancedMarkerElement({ position: { lat: p.lat, lng: p.lng }, content: el });
+      el.addEventListener('click', function(){ window.selectPedido(idx); post(idx); });
+      var m = new google.maps.marker.AdvancedMarkerElement({ position: { lat: p.lat, lng: p.lng }, content: el });
       return { marker: m, el: el, min: p.min };
     });
-
-    // Muestra/oculta según el zoom: alejado sólo destacados, al acercar aparecen más.
-    function refresh(){
-      const z = map.getZoom();
-      markers.forEach(function(mm){ mm.marker.map = (z >= mm.min) ? map : null; });
-    }
     map.addListener('zoom_changed', refresh);
-    refresh();
+    window.selectPedido(0);
   }
 </script>
 <script async src="https://maps.googleapis.com/maps/api/js?key=${key}&libraries=marker&callback=initMap"></script>
 </body>
 </html>`
 
-export function MapaPedidos({ height, fill }: { height?: number; fill?: boolean }) {
+export function MapaPedidos({
+  height,
+  fill,
+  selected,
+  onSelect,
+}: {
+  height?: number
+  fill?: boolean
+  selected?: number
+  onSelect?: (i: number) => void
+}) {
   const t = useTheme()
+  const ref = useRef<WebView>(null)
   const wrapStyle = fill ? styles.fill : [styles.wrap, { height: height ?? 300 }]
+
+  useEffect(() => {
+    if (selected != null && ref.current) {
+      ref.current.injectJavaScript(`window.selectPedido && window.selectPedido(${selected}); true;`)
+    }
+  }, [selected])
+
   if (!GOOGLE_KEY) {
     return (
       <View style={[wrapStyle, styles.fallback, { backgroundColor: t.surface2 }]}>
@@ -100,11 +109,16 @@ export function MapaPedidos({ height, fill }: { height?: number; fill?: boolean 
   return (
     <View style={wrapStyle}>
       <WebView
+        ref={ref}
         originWhitelist={['*']}
         source={{ html: html(GOOGLE_KEY) }}
         style={styles.web}
         scrollEnabled={false}
         showsVerticalScrollIndicator={false}
+        onMessage={(e) => {
+          const i = parseInt(e.nativeEvent.data, 10)
+          if (!isNaN(i)) onSelect?.(i)
+        }}
       />
     </View>
   )

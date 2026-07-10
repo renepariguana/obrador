@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { View, Text, ScrollView, TextInput, Pressable, StyleSheet } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { useNavigation } from '@react-navigation/native'
 import { MapaPedidos } from '../components/MapaPedidos'
 import { ConfirmarUbicacion } from '../components/ConfirmarUbicacion'
 import { Icon, IconName } from '../components/Icon'
@@ -60,6 +61,7 @@ export default function InicioScreen() {
   const t = useTheme()
   const insets = useSafeAreaInsets()
   const s = styles(t)
+  const navigation = useNavigation<any>()
   const [zona, setZona] = useState('Tucumán')
   const [showUbic, setShowUbic] = useState(false)
 
@@ -187,7 +189,11 @@ export default function InicioScreen() {
         <Text style={s.section}>Oficios</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.strip}>
           {OFICIOS.map((o) => (
-            <Pressable key={o.label} style={s.cat}>
+            <Pressable
+              key={o.label}
+              style={s.cat}
+              onPress={() => navigation.navigate('Oficio', { oficio: o.label })}
+            >
               <View style={s.catCircle}>
                 <Icon name={o.icon} size={24} color={t.text} />
               </View>
@@ -202,17 +208,9 @@ export default function InicioScreen() {
         <SectionHeader title="Profesionales cerca tuyo" />
         {renderPros(PROS)}
 
-        {/* ===== MEJORES TRABAJOS ===== */}
-        <SectionHeader title="Mejores trabajos" />
-        {renderTrabajos(TRABAJOS)}
-
-        {/* ===== URGENTES ===== */}
-        <SectionHeader title="Urgentes cerca tuyo" />
-        {renderTrabajos(URGENTES)}
-
-        {/* ===== LOS MÁS VALORADOS ===== */}
-        <SectionHeader title="Los más valorados" />
-        {renderPros(TOP_PROS)}
+        {/* NOTA: secciones "Mejores trabajos", "Urgentes cerca tuyo" y
+            "Los más valorados" sacadas por ahora (datos y helpers quedan
+            listos: TRABAJOS, URGENTES, TOP_PROS, renderTrabajos). */}
       </ScrollView>
 
       <ConfirmarUbicacion
