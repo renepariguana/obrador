@@ -153,7 +153,14 @@ export default function InicioScreen() {
               </Text>
               <Icon name="chevron" size={18} color={t.onPrimary} />
             </Pressable>
-            <Icon name="bell" size={22} color={t.onPrimary} />
+            <View style={s.headerActions}>
+              <Pressable hitSlop={8}>
+                <Icon name="card" size={23} color={t.onPrimary} />
+              </Pressable>
+              <Pressable hitSlop={8}>
+                <Icon name="bell" size={22} color={t.onPrimary} />
+              </Pressable>
+            </View>
           </View>
 
           {/* Buscador */}
@@ -242,6 +249,7 @@ const styles = (t: Theme) =>
     },
     topRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: 4 },
     locRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+    headerActions: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
     locText: { color: t.onPrimary, fontWeight: '800', fontSize: 16, letterSpacing: -0.2, maxWidth: 240 },
     search: {
       flexDirection: 'row',
