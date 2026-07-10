@@ -6,6 +6,7 @@ import { MapaPedidos } from '../components/MapaPedidos'
 import { ConfirmarUbicacion } from '../components/ConfirmarUbicacion'
 import { Icon, IconName } from '../components/Icon'
 import { useTheme, spacing, radius, Theme } from '../lib/theme'
+import { PROFESIONALES, Profesional } from '../data/profesionales'
 
 type Oficio = { label: string; icon: IconName }
 const OFICIOS: Oficio[] = [
@@ -104,10 +105,14 @@ export default function InicioScreen() {
     </ScrollView>
   )
 
-  const renderPros = (list: Pro[]) => (
+  const renderPros = (list: Profesional[]) => (
     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.strip}>
       {list.map((p) => (
-        <View key={p.nombre} style={s.proCard}>
+        <Pressable
+          key={p.id}
+          style={s.proCard}
+          onPress={() => navigation.navigate('Profesional', { pro: p })}
+        >
           <View style={s.avatarWrap}>
             <View style={s.avatar}>
               <Icon name="user" size={26} color={t.text3} />
@@ -128,7 +133,7 @@ export default function InicioScreen() {
             <Icon name="star" size={13} color={t.rating} />
             <Text style={s.ratingText}>{p.rating.toFixed(1)}</Text>
           </View>
-        </View>
+        </Pressable>
       ))}
     </ScrollView>
   )
@@ -206,7 +211,7 @@ export default function InicioScreen() {
 
         {/* ===== PROFESIONALES ===== */}
         <SectionHeader title="Profesionales cerca tuyo" />
-        {renderPros(PROS)}
+        {renderPros(PROFESIONALES.slice(0, 8))}
 
         {/* NOTA: secciones "Mejores trabajos", "Urgentes cerca tuyo" y
             "Los más valorados" sacadas por ahora (datos y helpers quedan
