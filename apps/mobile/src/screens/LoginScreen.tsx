@@ -2,6 +2,7 @@ import React from 'react'
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Icon } from '../components/Icon'
+import { LogoManos } from '../components/LogoManos'
 import { useTheme, spacing, radius, Theme } from '../lib/theme'
 import { useAuth } from '../lib/auth'
 
@@ -20,7 +21,7 @@ export default function LoginScreen() {
         </Pressable>
         <View style={s.brand}>
           <View style={s.logo}>
-            <Icon name="hand" size={54} color={t.onPrimary} />
+            <LogoManos size={74} color={t.onPrimary} />
           </View>
           <Text style={s.brandName}>Manos a la Obra</Text>
         </View>

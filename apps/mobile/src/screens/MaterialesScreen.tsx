@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { View, Text, ScrollView, TextInput, Pressable, ActivityIndicator, StyleSheet } from 'react-native'
 import { AppHeader } from '../components/AppHeader'
 import { Icon } from '../components/Icon'
+import { LogoManos } from '../components/LogoManos'
 import { useTheme, spacing, radius, Theme } from '../lib/theme'
 import { useZona } from '../lib/zona'
 import { Material, getCategorias, getMateriales, precioAr } from '../data/materialesApi'
@@ -37,7 +38,17 @@ export default function MaterialesScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: t.bg }}>
-      <AppHeader title="Cotizar" right={<Icon name="cart" size={23} color={t.onPrimary} />} />
+      <AppHeader
+        left={
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
+            <LogoManos size={40} color={t.onPrimary} />
+            <Text style={{ color: t.onPrimary, fontSize: 20, fontWeight: '900', letterSpacing: -0.4 }}>
+              Cotizar
+            </Text>
+          </View>
+        }
+        right={<Icon name="cart" size={23} color={t.onPrimary} />}
+      />
 
       {/* Buscador */}
       <View style={s.search}>
