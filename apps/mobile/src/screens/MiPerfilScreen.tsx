@@ -5,11 +5,25 @@ import { Icon, IconName } from '../components/Icon'
 import { useTheme, spacing, radius, Theme } from '../lib/theme'
 import { useZona } from '../lib/zona'
 
+const ICONO_RUBRO: Record<string, IconName> = {
+  Albañil: 'wall',
+  Plomero: 'wrench',
+  Electricista: 'zap',
+  Pintor: 'roller',
+  Carpintero: 'hammer',
+  Herrero: 'flame',
+  Paisajista: 'leaf',
+  Zinguero: 'home',
+  Durlero: 'box',
+  Gasista: 'flame',
+}
+
 export default function MiPerfilScreen() {
   const t = useTheme()
   const s = styles(t)
   const { zona } = useZona()
   const [verificado] = useState(false)
+  const rubro = 'Plomero' // rubro principal del trabajador
 
   const Row = ({ icon, label, onPress, danger }: { icon: IconName; label: string; onPress?: () => void; danger?: boolean }) => (
     <Pressable style={s.row} onPress={onPress}>
@@ -38,7 +52,15 @@ export default function MiPerfilScreen() {
             )}
           </View>
           <Text style={s.name}>René Pariguana</Text>
-          <Text style={s.sub}>San Miguel de Tucumán · {zona}</Text>
+          <Text style={s.sub}>{zona}</Text>
+
+          {/* Rubro principal */}
+          <View style={s.rubrosRow}>
+            <View style={s.rubroChip}>
+              <Icon name={ICONO_RUBRO[rubro] ?? 'briefcase'} size={13} color={t.text} />
+              <Text style={s.rubroTxt}>{rubro}</Text>
+            </View>
+          </View>
 
           <View style={s.stats}>
             <View style={s.stat}>
@@ -54,6 +76,11 @@ export default function MiPerfilScreen() {
             <View style={s.stat}>
               <Text style={s.statNum}>18</Text>
               <Text style={s.statLbl}>trabajos</Text>
+            </View>
+            <View style={s.statDiv} />
+            <View style={s.stat}>
+              <Text style={s.statNum}>42</Text>
+              <Text style={s.statLbl}>reseñas</Text>
             </View>
           </View>
         </View>
@@ -79,6 +106,7 @@ export default function MiPerfilScreen() {
         <View style={s.group}>
           <Row icon="chat" label="Mis pedidos" />
           <Row icon="hand" label="Mis postulaciones" />
+          <Row icon="briefcase" label="Mis trabajos" />
           <Row icon="star" label="Mis reseñas" />
         </View>
 
@@ -127,6 +155,21 @@ const styles = (t: Theme) =>
     },
     name: { color: t.text, fontSize: 22, fontWeight: '900', marginTop: spacing.md },
     sub: { color: t.text2, fontSize: 13, marginTop: 2 },
+    rubrosRow: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: spacing.sm, marginTop: spacing.md },
+    rubroChip: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 5,
+      backgroundColor: t.surface,
+      borderWidth: 1,
+      borderColor: t.border,
+      borderRadius: radius.pill,
+      paddingHorizontal: spacing.md,
+      paddingVertical: 7,
+    },
+    rubroChipOn: { backgroundColor: t.primary, borderColor: t.primary },
+    rubroTxt: { color: t.text2, fontSize: 13, fontWeight: '800' },
+    rubroHint: { color: t.text3, fontSize: 11, marginTop: spacing.sm, textAlign: 'center' },
     stats: {
       flexDirection: 'row',
       alignItems: 'center',

@@ -159,6 +159,7 @@ export default function InicioScreen() {
               </Pressable>
               <Pressable hitSlop={8}>
                 <Icon name="bell" size={22} color={t.onPrimary} />
+                <View style={s.bellDot} />
               </Pressable>
             </View>
           </View>
@@ -250,6 +251,17 @@ const styles = (t: Theme) =>
     topRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: 4 },
     locRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
     headerActions: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+    bellDot: {
+      position: 'absolute',
+      top: -1,
+      right: -1,
+      width: 9,
+      height: 9,
+      borderRadius: 5,
+      backgroundColor: t.danger,
+      borderWidth: 1.5,
+      borderColor: t.primary,
+    },
     locText: { color: t.onPrimary, fontWeight: '800', fontSize: 16, letterSpacing: -0.2, maxWidth: 240 },
     search: {
       flexDirection: 'row',
