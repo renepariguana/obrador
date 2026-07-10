@@ -11,6 +11,7 @@ import OficioScreen from './src/screens/OficioScreen'
 import ProfesionalScreen from './src/screens/ProfesionalScreen'
 import MaterialesScreen from './src/screens/MaterialesScreen'
 import TrabajosScreen from './src/screens/TrabajosScreen'
+import DetallePedidoScreen from './src/screens/DetallePedidoScreen'
 import PedidosScreen from './src/screens/PedidosScreen'
 import MiPerfilScreen from './src/screens/MiPerfilScreen'
 import LoginScreen from './src/screens/LoginScreen'
@@ -33,10 +34,19 @@ function InicioStack() {
   )
 }
 
+function TrabajosStack() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="TrabajosHome" component={TrabajosScreen} />
+      <Stack.Screen name="DetallePedido" component={DetallePedidoScreen} />
+    </Stack.Navigator>
+  )
+}
+
 const TABS: { name: string; comp: React.ComponentType; icon: IconName }[] = [
   { name: 'Inicio', comp: InicioStack, icon: 'home' },
   { name: 'Materiales', comp: MaterialesScreen, icon: 'box' },
-  { name: 'Trabajos', comp: TrabajosScreen, icon: 'hand' },
+  { name: 'Trabajos', comp: TrabajosStack, icon: 'hand' },
   { name: 'Pedidos', comp: PedidosScreen, icon: 'chat' },
   { name: 'Mi perfil', comp: MiPerfilScreen, icon: 'user' },
 ]

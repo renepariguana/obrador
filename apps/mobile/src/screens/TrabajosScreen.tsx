@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { View, Text, TextInput, Pressable, ScrollView, StyleSheet, Dimensions } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { useNavigation } from '@react-navigation/native'
 import { MapaPedidos } from '../components/MapaPedidos'
 import { Icon } from '../components/Icon'
 import { FiltrosSheet, Filtros } from '../components/FiltrosSheet'
@@ -16,6 +17,7 @@ export default function TrabajosScreen() {
   const insets = useSafeAreaInsets()
   const s = styles(t)
   const { zona } = useZona()
+  const navigation = useNavigation<any>()
   const [filtros, setFiltros] = useState<Filtros>({ zona: null, rubro: null, urgente: false })
   const [showFiltros, setShowFiltros] = useState(false)
   const [filtro, setFiltro] = useState('Todos')
@@ -133,10 +135,16 @@ export default function TrabajosScreen() {
                 </View>
 
                 <View style={s.actions}>
-                  <Pressable style={s.btnGhost}>
+                  <Pressable
+                    style={s.btnGhost}
+                    onPress={() => navigation.navigate('DetallePedido', { pedido: p })}
+                  >
                     <Text style={s.btnGhostTxt}>Ver detalle</Text>
                   </Pressable>
-                  <Pressable style={s.btnPrimary}>
+                  <Pressable
+                    style={s.btnPrimary}
+                    onPress={() => navigation.navigate('DetallePedido', { pedido: p })}
+                  >
                     <Icon name="check" size={18} color={t.onPrimary} />
                     <Text style={s.btnPrimaryTxt}>Postularme</Text>
                   </Pressable>
