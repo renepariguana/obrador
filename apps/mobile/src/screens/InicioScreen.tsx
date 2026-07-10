@@ -1,7 +1,8 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { View, Text, ScrollView, TextInput, Pressable, StyleSheet } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { MapaPedidos } from '../components/MapaPedidos'
+import { ConfirmarUbicacion } from '../components/ConfirmarUbicacion'
 import { Icon, IconName } from '../components/Icon'
 import { useTheme, spacing, radius, Theme } from '../lib/theme'
 
@@ -59,6 +60,8 @@ export default function InicioScreen() {
   const t = useTheme()
   const insets = useSafeAreaInsets()
   const s = styles(t)
+  const [zona, setZona] = useState('Tucumán')
+  const [showUbic, setShowUbic] = useState(false)
 
   const SectionHeader = ({ title, action = 'Ver todos' }: { title: string; action?: string }) => (
     <View style={s.sectionRow}>
@@ -134,9 +137,11 @@ export default function InicioScreen() {
         {/* ===== ZONA ÁMBAR ===== */}
         <View style={[s.hero, { paddingTop: insets.top + 8 }]}>
           <View style={s.topRow}>
-            <Pressable style={s.locRow}>
+            <Pressable style={s.locRow} onPress={() => setShowUbic(true)}>
               <Icon name="pin" size={18} color={t.onPrimary} />
-              <Text style={s.locText}>Tucumán</Text>
+              <Text style={s.locText} numberOfLines={1}>
+                {zona}
+              </Text>
               <Icon name="chevron" size={18} color={t.onPrimary} />
             </Pressable>
             <Icon name="bell" size={22} color={t.onPrimary} />
@@ -209,6 +214,14 @@ export default function InicioScreen() {
         <SectionHeader title="Los más valorados" />
         {renderPros(TOP_PROS)}
       </ScrollView>
+
+      <ConfirmarUbicacion
+        visible={showUbic}
+        onConfirm={(z) => {
+          if (z) setZona(z)
+          setShowUbic(false)
+        }}
+      />
     </View>
   )
 }
@@ -224,7 +237,7 @@ const styles = (t: Theme) =>
     },
     topRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: 4 },
     locRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-    locText: { color: t.onPrimary, fontWeight: '800', fontSize: 16, letterSpacing: -0.2 },
+    locText: { color: t.onPrimary, fontWeight: '800', fontSize: 16, letterSpacing: -0.2, maxWidth: 240 },
     search: {
       flexDirection: 'row',
       alignItems: 'center',

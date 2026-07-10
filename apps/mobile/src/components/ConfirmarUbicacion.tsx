@@ -10,14 +10,20 @@ const OPCIONES = [
   { label: 'Yerba Buena', sub: 'Tucumán' },
 ]
 
-export function ConfirmarUbicacion({ visible, onConfirm }: { visible: boolean; onConfirm: () => void }) {
+export function ConfirmarUbicacion({
+  visible,
+  onConfirm,
+}: {
+  visible: boolean
+  onConfirm: (zona?: string) => void
+}) {
   const t = useTheme()
   const insets = useSafeAreaInsets()
   const s = styles(t)
   const [sel, setSel] = useState(0)
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onConfirm}>
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={() => onConfirm()}>
       <View style={s.backdrop}>
         <View style={[s.sheet, { paddingBottom: insets.bottom + spacing.lg }]}>
           <View style={s.grabber} />
@@ -43,10 +49,10 @@ export function ConfirmarUbicacion({ visible, onConfirm }: { visible: boolean; o
             )
           })}
 
-          <Pressable style={s.confirm} onPress={onConfirm}>
+          <Pressable style={s.confirm} onPress={() => onConfirm(OPCIONES[sel].label)}>
             <Text style={s.confirmTxt}>Confirmar</Text>
           </Pressable>
-          <Pressable style={s.nueva} onPress={onConfirm}>
+          <Pressable style={s.nueva} onPress={() => onConfirm()}>
             <Text style={s.nuevaTxt}>Nueva dirección</Text>
           </Pressable>
         </View>
