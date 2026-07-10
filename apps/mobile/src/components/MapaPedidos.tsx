@@ -6,13 +6,19 @@ import { useTheme } from '../lib/theme'
 // La API key va en .env (EXPO_PUBLIC_GOOGLE_MAPS_JS_KEY) — nunca hardcodeada.
 const GOOGLE_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_JS_KEY ?? ''
 
-// Pedidos de ejemplo (más adelante vienen de Supabase, filtrados por zona)
+// Pedidos de ejemplo (más adelante vienen de Supabase, filtrados por zona).
+// `min` = zoom mínimo para que el globo aparezca. Los destacados tienen min bajo
+// (se ven aunque estés alejado); el resto aparece a medida que hacés zoom.
 const PEDIDOS = [
-  { lat: -26.822, lng: -65.2225, oficio: 'Plomero', desc: 'Pérdida en la cocina', sel: true },
-  { lat: -26.8185, lng: -65.2255, oficio: 'Electricista', desc: 'Se cortó la luz', sel: false },
-  { lat: -26.8205, lng: -65.2155, oficio: 'Albañil', desc: 'Levantar pared', sel: false },
-  { lat: -26.8245, lng: -65.2135, oficio: 'Pintor', desc: 'Pintar living', sel: false },
-  { lat: -26.8285, lng: -65.226, oficio: 'Gasista', desc: 'Revisar estufa', sel: false },
+  { lat: -26.822, lng: -65.2225, oficio: 'Plomero', desc: 'Pérdida en la cocina', sel: true, min: 13 },
+  { lat: -26.8185, lng: -65.2255, oficio: 'Electricista', desc: 'Se cortó la luz', sel: false, min: 13 },
+  { lat: -26.8205, lng: -65.2155, oficio: 'Albañil', desc: 'Levantar pared', sel: false, min: 14 },
+  { lat: -26.8245, lng: -65.2135, oficio: 'Pintor', desc: 'Pintar living', sel: false, min: 15 },
+  { lat: -26.8285, lng: -65.226, oficio: 'Gasista', desc: 'Revisar estufa', sel: false, min: 15 },
+  { lat: -26.8165, lng: -65.219, oficio: 'Carpintero', desc: 'Arreglar puerta', sel: false, min: 16 },
+  { lat: -26.826, lng: -65.212, oficio: 'Herrero', desc: 'Reja de balcón', sel: false, min: 16 },
+  { lat: -26.8305, lng: -65.221, oficio: 'Durlero', desc: 'Cielorraso', sel: false, min: 16 },
+  { lat: -26.815, lng: -65.2235, oficio: 'Pintor', desc: 'Frente de casa', sel: false, min: 15 },
 ]
 
 const PERSON_SVG =
@@ -46,22 +52,30 @@ const html = (key: string) => `<!DOCTYPE html>
   const ICO = '${PERSON_SVG}';
   function initMap(){
     const map = new google.maps.Map(document.getElementById('map'), {
-      center: CENTER, zoom: 15, disableDefaultUI: true, mapId: 'DEMO_MAP_ID', clickableIcons: false,
+      center: CENTER, zoom: 14, disableDefaultUI: true, mapId: 'DEMO_MAP_ID', clickableIcons: false,
     });
     const meEl = document.createElement('div'); meEl.className = 'me';
     new google.maps.marker.AdvancedMarkerElement({ map, position: CENTER, content: meEl });
-    const bubbles = [];
-    PEDIDOS.forEach(function(p){
+
+    const markers = PEDIDOS.map(function(p){
       const el = document.createElement('div');
       el.className = 'bubble' + (p.sel ? ' sel' : '');
       el.innerHTML = '<span class="ico">'+ICO+'</span><span><span class="oficio">'+p.oficio+'</span><span class="desc">'+p.desc+'</span></span>';
       el.addEventListener('click', function(){
-        bubbles.forEach(function(b){ b.classList.remove('sel'); });
+        markers.forEach(function(mm){ mm.el.classList.remove('sel'); });
         el.classList.add('sel');
       });
-      bubbles.push(el);
-      new google.maps.marker.AdvancedMarkerElement({ map, position: { lat: p.lat, lng: p.lng }, content: el });
+      const m = new google.maps.marker.AdvancedMarkerElement({ position: { lat: p.lat, lng: p.lng }, content: el });
+      return { marker: m, el: el, min: p.min };
     });
+
+    // Muestra/oculta según el zoom: alejado sólo destacados, al acercar aparecen más.
+    function refresh(){
+      const z = map.getZoom();
+      markers.forEach(function(mm){ mm.marker.map = (z >= mm.min) ? map : null; });
+    }
+    map.addListener('zoom_changed', refresh);
+    refresh();
   }
 </script>
 <script async src="https://maps.googleapis.com/maps/api/js?key=${key}&libraries=marker&callback=initMap"></script>

@@ -26,10 +26,108 @@ const PROS: Pro[] = [
   { nombre: 'Ana P.', oficio: 'Albañil', rating: 4.8, verificado: true },
 ]
 
+type Trabajo = {
+  titulo: string
+  oficio: string
+  icon: IconName
+  badge: string
+  urgente?: boolean
+  dist: string
+  pres: string
+  postulados: number
+}
+const TRABAJOS: Trabajo[] = [
+  { titulo: 'Pintar living y comedor', oficio: 'Pintor', icon: 'roller', badge: 'Bien pago', dist: '0,8 km', pres: '$45.000', postulados: 2 },
+  { titulo: 'Pérdida de agua en cocina', oficio: 'Plomero', icon: 'wrench', badge: 'Urgente', urgente: true, dist: '0,6 km', pres: '$12.000', postulados: 2 },
+  { titulo: 'Instalar tablero eléctrico', oficio: 'Electricista', icon: 'zap', badge: 'Hoy', dist: '1,2 km', pres: '$30.000', postulados: 1 },
+]
+
+const URGENTES: Trabajo[] = [
+  { titulo: 'Destapar cloaca', oficio: 'Plomero', icon: 'wrench', badge: 'Urgente', urgente: true, dist: '0,4 km', pres: '$18.000', postulados: 0 },
+  { titulo: 'Cortocircuito en tablero', oficio: 'Electricista', icon: 'zap', badge: 'Urgente', urgente: true, dist: '1,0 km', pres: '$25.000', postulados: 1 },
+  { titulo: 'Filtración en el techo', oficio: 'Zinguero', icon: 'home', badge: 'Urgente', urgente: true, dist: '2,1 km', pres: '$40.000', postulados: 0 },
+]
+
+const TOP_PROS: Pro[] = [
+  { nombre: 'Roberto M.', oficio: 'Electricista', rating: 5.0, verificado: true },
+  { nombre: 'Lucía F.', oficio: 'Pintora', rating: 4.9, verificado: true },
+  { nombre: 'Jorge V.', oficio: 'Carpintero', rating: 4.9, verificado: true },
+  { nombre: 'Sofía T.', oficio: 'Plomera', rating: 4.8, verificado: true },
+]
+
 export default function InicioScreen() {
   const t = useTheme()
   const insets = useSafeAreaInsets()
   const s = styles(t)
+
+  const SectionHeader = ({ title, action = 'Ver todos' }: { title: string; action?: string }) => (
+    <View style={s.sectionRow}>
+      <Text style={s.section}>{title}</Text>
+      <Pressable>
+        <Text style={s.verMas}>{action}</Text>
+      </Pressable>
+    </View>
+  )
+
+  const renderTrabajos = (list: Trabajo[]) => (
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.strip}>
+      {list.map((j) => (
+        <Pressable key={j.titulo} style={s.jobCard}>
+          <View style={s.jobHeader}>
+            <Icon name={j.icon} size={40} color={t.text3} />
+            <View style={[s.badge, j.urgente ? s.badgeDanger : s.badgePrimary]}>
+              <Text style={[s.badgeTxt, { color: j.urgente ? '#FFFFFF' : t.onPrimary }]}>{j.badge}</Text>
+            </View>
+          </View>
+          <View style={s.jobBody}>
+            <Text style={s.jobTitle} numberOfLines={1}>
+              {j.titulo}
+            </Text>
+            <View style={s.jobMetaRow}>
+              <Icon name="pin" size={13} color={t.text3} />
+              <Text style={s.jobMeta}>
+                {j.dist} · {j.oficio}
+              </Text>
+            </View>
+            <View style={s.jobFoot}>
+              <Text style={s.jobPres}>{j.pres}</Text>
+              <Text style={s.jobPost}>{j.postulados} postulados</Text>
+            </View>
+          </View>
+        </Pressable>
+      ))}
+    </ScrollView>
+  )
+
+  const renderPros = (list: Pro[]) => (
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.strip}>
+      {list.map((p) => (
+        <View key={p.nombre} style={s.proCard}>
+          <View style={s.avatarWrap}>
+            <View style={s.avatar}>
+              <Icon name="user" size={26} color={t.text3} />
+            </View>
+            {p.verificado && (
+              <View style={s.verif}>
+                <Icon name="check" size={11} color={t.onPrimary} />
+              </View>
+            )}
+          </View>
+          <Text style={s.proName} numberOfLines={1}>
+            {p.nombre}
+          </Text>
+          <Text style={s.proOficio} numberOfLines={1}>
+            {p.oficio}
+          </Text>
+          <View style={s.ratingRow}>
+            <Icon name="star" size={13} color={t.rating} />
+            <Text style={s.ratingText}>{p.rating.toFixed(1)}</Text>
+          </View>
+        </View>
+      ))}
+    </ScrollView>
+  )
+
   return (
     <View style={{ flex: 1, backgroundColor: t.bg }}>
       <ScrollView contentContainerStyle={{ paddingBottom: spacing.xl }} showsVerticalScrollIndicator={false}>
@@ -49,7 +147,7 @@ export default function InicioScreen() {
             <Icon name="search" size={20} color={t.text3} />
             <TextInput
               style={s.searchInput}
-              placeholder="Buscar plomero, pintura, arena…"
+              placeholder="¿Qué necesitás hacer hoy?"
               placeholderTextColor={t.text3}
             />
           </View>
@@ -77,7 +175,7 @@ export default function InicioScreen() {
           </Pressable>
         </View>
         <View style={s.mapCard}>
-          <MapaPedidos height={300} />
+          <MapaPedidos height={210} />
         </View>
 
         {/* ===== OFICIOS ===== */}
@@ -95,39 +193,21 @@ export default function InicioScreen() {
           ))}
         </ScrollView>
 
-        {/* ===== PROFESIONALES (en tira) ===== */}
-        <View style={s.sectionRow}>
-          <Text style={s.section}>Profesionales cerca tuyo</Text>
-          <Pressable>
-            <Text style={s.verMas}>Ver todos</Text>
-          </Pressable>
-        </View>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.strip}>
-          {PROS.map((p) => (
-            <View key={p.nombre} style={s.proCard}>
-              <View style={s.avatarWrap}>
-                <View style={s.avatar}>
-                  <Icon name="user" size={26} color={t.text3} />
-                </View>
-                {p.verificado && (
-                  <View style={s.verif}>
-                    <Icon name="check" size={11} color={t.onPrimary} />
-                  </View>
-                )}
-              </View>
-              <Text style={s.proName} numberOfLines={1}>
-                {p.nombre}
-              </Text>
-              <Text style={s.proOficio} numberOfLines={1}>
-                {p.oficio}
-              </Text>
-              <View style={s.ratingRow}>
-                <Icon name="star" size={13} color={t.rating} />
-                <Text style={s.ratingText}>{p.rating.toFixed(1)}</Text>
-              </View>
-            </View>
-          ))}
-        </ScrollView>
+        {/* ===== PROFESIONALES ===== */}
+        <SectionHeader title="Profesionales cerca tuyo" />
+        {renderPros(PROS)}
+
+        {/* ===== MEJORES TRABAJOS ===== */}
+        <SectionHeader title="Mejores trabajos" />
+        {renderTrabajos(TRABAJOS)}
+
+        {/* ===== URGENTES ===== */}
+        <SectionHeader title="Urgentes cerca tuyo" />
+        {renderTrabajos(URGENTES)}
+
+        {/* ===== LOS MÁS VALORADOS ===== */}
+        <SectionHeader title="Los más valorados" />
+        {renderPros(TOP_PROS)}
       </ScrollView>
     </View>
   )
@@ -138,7 +218,7 @@ const styles = (t: Theme) =>
     hero: {
       backgroundColor: t.primary,
       paddingHorizontal: spacing.lg,
-      paddingBottom: spacing.lg,
+      paddingBottom: spacing.xl + spacing.sm,
       borderBottomLeftRadius: 28,
       borderBottomRightRadius: 28,
     },
@@ -156,7 +236,7 @@ const styles = (t: Theme) =>
       marginTop: spacing.md,
     },
     searchInput: { flex: 1, color: '#16181D', fontSize: 15, padding: 0 },
-    promo: { flexDirection: 'row', alignItems: 'center', marginTop: spacing.lg, minHeight: 72 },
+    promo: { flexDirection: 'row', alignItems: 'center', marginTop: spacing.xl, minHeight: 92 },
     promoTitle: { color: t.onPrimary, fontSize: 22, fontWeight: '900', letterSpacing: -0.4 },
     promoSub: { color: t.onPrimary, opacity: 0.75, fontSize: 13, marginTop: 4, fontWeight: '600' },
     dots: { flexDirection: 'row', gap: 6, marginTop: spacing.md, justifyContent: 'center' },
@@ -180,6 +260,43 @@ const styles = (t: Theme) =>
       borderColor: t.border,
     },
     strip: { paddingHorizontal: spacing.lg, gap: spacing.md },
+    jobCard: {
+      width: 232,
+      backgroundColor: t.surface,
+      borderRadius: radius.lg,
+      borderWidth: 1,
+      borderColor: t.border,
+      overflow: 'hidden',
+    },
+    jobHeader: {
+      height: 96,
+      backgroundColor: t.surface2,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    badge: {
+      position: 'absolute',
+      top: spacing.sm,
+      left: spacing.sm,
+      borderRadius: radius.pill,
+      paddingHorizontal: 10,
+      paddingVertical: 4,
+    },
+    badgePrimary: { backgroundColor: t.primary },
+    badgeDanger: { backgroundColor: t.danger },
+    badgeTxt: { fontSize: 11, fontWeight: '800' },
+    jobBody: { padding: spacing.md },
+    jobTitle: { color: t.text, fontSize: 15, fontWeight: '800' },
+    jobMetaRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 },
+    jobMeta: { color: t.text2, fontSize: 12, fontWeight: '600' },
+    jobFoot: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginTop: spacing.sm,
+    },
+    jobPres: { color: t.text, fontSize: 15, fontWeight: '900' },
+    jobPost: { color: t.text3, fontSize: 12, fontWeight: '600' },
     cat: { width: 68, alignItems: 'center', gap: 6 },
     catCircle: {
       width: 64,
