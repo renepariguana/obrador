@@ -1,42 +1,43 @@
 import React, { useState } from 'react'
 import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native'
-import { AppHeader } from '../components/AppHeader'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Icon, IconName } from '../components/Icon'
+import { AppHeader } from '../components/AppHeader'
 import { useTheme, spacing, radius, Theme } from '../lib/theme'
-import { useZona } from '../lib/zona'
 import { useAuth } from '../lib/auth'
-
-const ICONO_RUBRO: Record<string, IconName> = {
-  Albañil: 'wall',
-  Plomero: 'wrench',
-  Electricista: 'zap',
-  Pintor: 'roller',
-  Carpintero: 'hammer',
-  Herrero: 'flame',
-  Paisajista: 'leaf',
-  Zinguero: 'home',
-  Durlero: 'box',
-  Gasista: 'flame',
-}
 
 export default function MiPerfilScreen() {
   const t = useTheme()
+  const insets = useSafeAreaInsets()
   const s = styles(t)
-  const { zona } = useZona()
   const { cerrarSesion, logueado, irLogin } = useAuth()
   const [verificado] = useState(false)
-  const rubro = 'Plomero' // rubro principal del trabajador
 
-  const Row = ({ icon, label, onPress, danger }: { icon: IconName; label: string; onPress?: () => void; danger?: boolean }) => (
+  const Row = ({ icon, label, onPress, danger, tag }: { icon: IconName; label: string; onPress?: () => void; danger?: boolean; tag?: string }) => (
     <Pressable style={s.row} onPress={onPress}>
-      <View style={[s.rowIcon, danger && s.rowIconDanger]}>
-        <Icon name={icon} size={19} color={danger ? t.danger : t.text} />
-      </View>
+      <Icon name={icon} size={22} color={danger ? t.danger : t.text} />
       <Text style={[s.rowLabel, danger && { color: t.danger }]}>{label}</Text>
+      {tag && (
+        <View style={s.tag}>
+          <Text style={s.tagTxt}>{tag}</Text>
+        </View>
+      )}
       <Icon name="chevron" size={18} color={t.text3} />
     </Pressable>
   )
 
+  const Tile = ({ icon, label }: { icon: IconName; label: string }) => (
+    <Pressable style={s.tile}>
+      <View style={s.tileIcon}>
+        <Icon name={icon} size={24} color={t.text} />
+      </View>
+      <Text style={s.tileLabel} numberOfLines={2}>
+        {label}
+      </Text>
+    </Pressable>
+  )
+
+  // ===== Invitado =====
   if (!logueado) {
     return (
       <View style={{ flex: 1, backgroundColor: t.bg }}>
@@ -57,93 +58,84 @@ export default function MiPerfilScreen() {
     )
   }
 
+  // ===== Logueado =====
   return (
     <View style={{ flex: 1, backgroundColor: t.bg }}>
-      <AppHeader title="Mi perfil" right={<Icon name="gear" size={22} color={t.onPrimary} />} />
-      <ScrollView contentContainerStyle={{ paddingBottom: spacing.xl }} showsVerticalScrollIndicator={false}>
-        {/* Perfil */}
-        <View style={s.profile}>
-          <View style={s.avatarWrap}>
-            <View style={s.avatar}>
-              <Icon name="user" size={40} color={t.text3} />
-            </View>
-            {verificado && (
-              <View style={s.verif}>
-                <Icon name="check" size={14} color={t.onPrimary} />
-              </View>
-            )}
-          </View>
-          <Text style={s.name}>René Pariguana</Text>
-          <Text style={s.sub}>{zona}</Text>
-
-          {/* Rubro principal */}
-          <View style={s.rubrosRow}>
-            <View style={s.rubroChip}>
-              <Icon name={ICONO_RUBRO[rubro] ?? 'briefcase'} size={13} color={t.text} />
-              <Text style={s.rubroTxt}>{rubro}</Text>
-            </View>
-          </View>
-
-          <View style={s.stats}>
-            <View style={s.stat}>
-              <Text style={s.statNum}>4.9</Text>
-              <Text style={s.statLbl}>rating</Text>
-            </View>
-            <View style={s.statDiv} />
-            <View style={s.stat}>
-              <Text style={s.statNum}>860</Text>
-              <Text style={s.statLbl}>puntos</Text>
-            </View>
-            <View style={s.statDiv} />
-            <View style={s.stat}>
-              <Text style={s.statNum}>18</Text>
-              <Text style={s.statLbl}>trabajos</Text>
-            </View>
-            <View style={s.statDiv} />
-            <View style={s.stat}>
-              <Text style={s.statNum}>42</Text>
-              <Text style={s.statLbl}>reseñas</Text>
-            </View>
+      <ScrollView
+        contentContainerStyle={{ paddingTop: insets.top + spacing.md, paddingBottom: spacing.xl }}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Saludo */}
+        <View style={s.greet}>
+          <Text style={s.hola}>¡Hola, René!</Text>
+          <View style={s.avatarSmall}>
+            <Icon name="user" size={22} color={t.text3} />
           </View>
         </View>
 
-        {/* Verificación */}
+        {/* Banner verificación */}
         {!verificado && (
-          <View style={s.verifCard}>
+          <View style={s.banner}>
             <View style={{ flex: 1 }}>
-              <Text style={s.verifTitle}>Verificá tu identidad</Text>
-              <Text style={s.verifText}>
-                Sumás confianza con reconocimiento facial + DNI. Los perfiles verificados reciben
-                más trabajos.
-              </Text>
+              <Text style={s.bannerTitle}>Verificá tu identidad</Text>
+              <Text style={s.bannerText}>Reconocimiento facial + DNI. Los perfiles verificados reciben más trabajos.</Text>
             </View>
-            <Pressable style={s.verifBtn}>
-              <Text style={s.verifBtnTxt}>Verificarme</Text>
-            </Pressable>
+            <Icon name="chevron" size={22} color={t.onPrimary} />
           </View>
         )}
 
-        {/* Actividad */}
-        <Text style={s.section}>Mi actividad</Text>
-        <View style={s.group}>
-          <Row icon="chat" label="Mis pedidos" />
-          <Row icon="hand" label="Mis postulaciones" />
-          <Row icon="briefcase" label="Mis trabajos" />
-          <Row icon="star" label="Mis reseñas" />
+        {/* Accesos rápidos */}
+        <View style={s.tiles}>
+          <Tile icon="user" label="Datos personales" />
+          <Tile icon="star" label="Mis reseñas" />
+          <Tile icon="badge" label="Verificación" />
+          <Tile icon="phone" label="Ayuda" />
         </View>
 
-        {/* Cuenta */}
-        <Text style={s.section}>Cuenta</Text>
+        {/* Completá tu perfil */}
+        <View style={s.progress}>
+          <View style={s.progressHead}>
+            <Text style={s.progressTitle}>Completá tu perfil</Text>
+            <Text style={s.progressLink}>Completar</Text>
+          </View>
+          <Text style={s.progressSub}>1 de 3</Text>
+          <View style={s.track}>
+            <View style={[s.seg, s.segOn]} />
+            <View style={s.seg} />
+            <View style={s.seg} />
+          </View>
+          <Text style={s.progressHint}>Verificá tu identidad y sumá tu primer trabajo.</Text>
+        </View>
+
+        {/* Perfil */}
+        <Text style={s.section}>Perfil</Text>
         <View style={s.group}>
-          <Row icon="badge" label="Medios de pago (MercadoPago)" />
-          <Row icon="gear" label="Configuración" />
-          <Row icon="phone" label="Ayuda y soporte" />
+          <Row icon="pin" label="Direcciones" />
+          <Row icon="heart" label="Favoritos" />
+          <Row icon="wrench" label="Mis rubros" />
+        </View>
+
+        {/* Actividad */}
+        <Text style={s.section}>Actividad</Text>
+        <View style={s.group}>
+          <Row icon="chat" label="Mis pedidos" />
+          <Row icon="briefcase" label="Mis trabajos" />
+          <Row icon="hand" label="Mis postulaciones" />
+          <Row icon="card" label="Medios de pago" />
+        </View>
+
+        {/* Configuración */}
+        <Text style={s.section}>Configuración</Text>
+        <View style={s.group}>
+          <Row icon="bell" label="Notificaciones" />
+          <Row icon="info" label="Información legal" />
+          <Row icon="store" label="Ofrecer mis servicios" tag="Nuevo" />
         </View>
 
         {/* Sesión */}
         <View style={[s.group, { marginTop: spacing.lg }]}>
           <Row icon="logout" label="Cerrar sesión" onPress={cerrarSesion} />
-          <Row icon="trash" label="Borrar cuenta" danger />
+          <Row icon="trash" label="Eliminar cuenta" danger />
         </View>
       </ScrollView>
     </View>
@@ -158,93 +150,34 @@ const styles = (t: Theme) =>
     guestText: { color: t.text2, fontSize: 14, textAlign: 'center', marginTop: spacing.sm, lineHeight: 20 },
     guestBtn: { marginTop: spacing.xl, height: 52, borderRadius: radius.md, backgroundColor: t.primary, paddingHorizontal: spacing.xl * 1.5, alignItems: 'center', justifyContent: 'center' },
     guestBtnTxt: { color: t.onPrimary, fontSize: 16, fontWeight: '800' },
-    profile: { alignItems: 'center', paddingTop: spacing.lg, paddingHorizontal: spacing.lg },
-    avatarWrap: { width: 84, height: 84 },
-    avatar: {
-      width: 84,
-      height: 84,
-      borderRadius: radius.pill,
-      backgroundColor: t.surface2,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    verif: {
-      position: 'absolute',
-      right: 0,
-      bottom: 2,
-      width: 28,
-      height: 28,
-      borderRadius: 14,
-      backgroundColor: t.primary,
-      borderWidth: 3,
-      borderColor: t.bg,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    name: { color: t.text, fontSize: 22, fontWeight: '900', marginTop: spacing.md },
-    sub: { color: t.text2, fontSize: 13, marginTop: 2 },
-    rubrosRow: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: spacing.sm, marginTop: spacing.md },
-    rubroChip: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 5,
-      backgroundColor: t.surface,
-      borderWidth: 1,
-      borderColor: t.border,
-      borderRadius: radius.pill,
-      paddingHorizontal: spacing.md,
-      paddingVertical: 7,
-    },
-    rubroChipOn: { backgroundColor: t.primary, borderColor: t.primary },
-    rubroTxt: { color: t.text2, fontSize: 13, fontWeight: '800' },
-    rubroHint: { color: t.text3, fontSize: 11, marginTop: spacing.sm, textAlign: 'center' },
-    stats: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      backgroundColor: t.surface,
-      borderRadius: radius.lg,
-      borderWidth: 1,
-      borderColor: t.border,
-      paddingVertical: spacing.md,
-      marginTop: spacing.lg,
-      alignSelf: 'stretch',
-    },
-    stat: { flex: 1, alignItems: 'center' },
-    statDiv: { width: 1, height: 28, backgroundColor: t.border },
-    statNum: { color: t.text, fontSize: 18, fontWeight: '900' },
-    statLbl: { color: t.text3, fontSize: 12, marginTop: 2 },
-    verifCard: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: spacing.md,
-      backgroundColor: t.primary,
-      borderRadius: radius.lg,
-      padding: spacing.lg,
-      marginHorizontal: spacing.lg,
-      marginTop: spacing.lg,
-    },
-    verifTitle: { color: t.onPrimary, fontSize: 15, fontWeight: '900' },
-    verifText: { color: t.onPrimary, opacity: 0.8, fontSize: 12, marginTop: 3, lineHeight: 16 },
-    verifBtn: { backgroundColor: '#1A1A1A', borderRadius: radius.pill, paddingHorizontal: spacing.md, paddingVertical: 10 },
-    verifBtnTxt: { color: '#FFFFFF', fontSize: 13, fontWeight: '800' },
-    section: {
-      color: t.text,
-      fontSize: 15,
-      fontWeight: '800',
-      paddingHorizontal: spacing.lg,
-      paddingTop: spacing.xl,
-      paddingBottom: spacing.sm,
-    },
-    group: {
-      backgroundColor: t.surface,
-      borderRadius: radius.lg,
-      borderWidth: 1,
-      borderColor: t.border,
-      marginHorizontal: spacing.lg,
-      overflow: 'hidden',
-    },
-    row: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingHorizontal: spacing.md, height: 54 },
-    rowIcon: { width: 34, height: 34, borderRadius: 10, backgroundColor: t.surface2, alignItems: 'center', justifyContent: 'center' },
-    rowIconDanger: { backgroundColor: 'rgba(199,54,43,0.12)' },
-    rowLabel: { flex: 1, color: t.text, fontSize: 14, fontWeight: '600' },
+
+    greet: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: spacing.lg },
+    hola: { color: t.text, fontSize: 22, fontWeight: '900' },
+    avatarSmall: { width: 44, height: 44, borderRadius: 22, backgroundColor: t.surface2, alignItems: 'center', justifyContent: 'center' },
+
+    banner: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, backgroundColor: t.primary, borderRadius: radius.lg, padding: spacing.lg, marginHorizontal: spacing.lg, marginTop: spacing.lg },
+    bannerTitle: { color: t.onPrimary, fontSize: 15, fontWeight: '900' },
+    bannerText: { color: t.onPrimary, opacity: 0.82, fontSize: 12, marginTop: 3, lineHeight: 16 },
+
+    tiles: { flexDirection: 'row', gap: spacing.sm, paddingHorizontal: spacing.lg, marginTop: spacing.lg },
+    tile: { flex: 1, alignItems: 'center', gap: 6 },
+    tileIcon: { width: '100%', height: 62, borderRadius: radius.md, backgroundColor: t.surface, borderWidth: 1, borderColor: t.border, alignItems: 'center', justifyContent: 'center' },
+    tileLabel: { color: t.text2, fontSize: 11, fontWeight: '700', textAlign: 'center' },
+
+    progress: { backgroundColor: t.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: t.border, padding: spacing.lg, marginHorizontal: spacing.lg, marginTop: spacing.lg },
+    progressHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+    progressTitle: { color: t.text, fontSize: 16, fontWeight: '900' },
+    progressLink: { color: t.text, fontSize: 14, fontWeight: '800' },
+    progressSub: { color: t.text2, fontSize: 13, marginTop: 2 },
+    track: { flexDirection: 'row', gap: 5, marginTop: spacing.sm },
+    seg: { flex: 1, height: 5, borderRadius: 3, backgroundColor: t.surface2 },
+    segOn: { backgroundColor: t.primary },
+    progressHint: { color: t.text3, fontSize: 12, marginTop: spacing.sm },
+
+    section: { color: t.text, fontSize: 16, fontWeight: '900', paddingHorizontal: spacing.lg, paddingTop: spacing.xl, paddingBottom: spacing.sm },
+    group: { backgroundColor: t.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: t.border, marginHorizontal: spacing.lg, overflow: 'hidden' },
+    row: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingHorizontal: spacing.md, height: 56 },
+    rowLabel: { flex: 1, color: t.text, fontSize: 15, fontWeight: '600' },
+    tag: { backgroundColor: t.primary, borderRadius: radius.pill, paddingHorizontal: 8, paddingVertical: 2 },
+    tagTxt: { color: t.onPrimary, fontSize: 10, fontWeight: '800' },
   })
