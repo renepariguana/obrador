@@ -13,7 +13,7 @@ export default function LoginScreen() {
 
   return (
     <View style={[s.root, { paddingBottom: insets.bottom + spacing.md }]}>
-      {/* Hero con la marca */}
+      {/* Hero con la marca (ámbar) */}
       <View style={[s.hero, { paddingTop: insets.top + spacing.md }]}>
         <Pressable onPress={entrarInvitado} hitSlop={10} style={s.ahoraNo}>
           <Text style={s.ahoraNoTxt}>Ahora no</Text>

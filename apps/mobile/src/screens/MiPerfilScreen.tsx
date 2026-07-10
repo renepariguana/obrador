@@ -37,21 +37,37 @@ export default function MiPerfilScreen() {
     </Pressable>
   )
 
-  // ===== Invitado =====
+  // ===== Invitado (sin loguear, ubicación confirmada) =====
   if (!logueado) {
     return (
       <View style={{ flex: 1, backgroundColor: t.bg }}>
-        <AppHeader title="Mi perfil" />
-        <View style={s.guestWrap}>
-          <View style={s.guestIcon}>
-            <Icon name="user" size={44} color={t.text3} />
-          </View>
-          <Text style={s.guestTitle}>Ingresá a tu cuenta</Text>
-          <Text style={s.guestText}>
-            Creá tu perfil para publicar pedidos, postularte a trabajos y sumar puntos.
-          </Text>
-          <Pressable style={s.guestBtn} onPress={irLogin}>
-            <Text style={s.guestBtnTxt}>Ingresar</Text>
+        <View style={[s.welcomeHero, { paddingTop: insets.top + spacing.xl }]}>
+          <Text style={s.welcomeTitle}>Te damos{'\n'}la bienvenida</Text>
+        </View>
+
+        <View style={{ paddingTop: spacing.md }}>
+          <Pressable style={s.gRow} onPress={irLogin}>
+            <Icon name="login" size={22} color={t.text} />
+            <Text style={s.gLabel}>Registrarme / Iniciar sesión</Text>
+            <Icon name="chevron" size={18} color={t.text3} />
+          </Pressable>
+
+          <View style={s.gGap} />
+
+          <Pressable style={s.gRow}>
+            <Icon name="phone" size={22} color={t.text} />
+            <Text style={s.gLabel}>Ayuda</Text>
+            <Icon name="chevron" size={18} color={t.text3} />
+          </Pressable>
+          <Pressable style={s.gRow}>
+            <Icon name="store" size={22} color={t.text} />
+            <Text style={s.gLabel}>Registrar mi negocio</Text>
+            <Icon name="chevron" size={18} color={t.text3} />
+          </Pressable>
+          <Pressable style={s.gRow}>
+            <Icon name="info" size={22} color={t.text} />
+            <Text style={s.gLabel}>Información legal</Text>
+            <Icon name="chevron" size={18} color={t.text3} />
           </Pressable>
         </View>
       </View>
@@ -144,6 +160,19 @@ export default function MiPerfilScreen() {
 
 const styles = (t: Theme) =>
   StyleSheet.create({
+    welcomeHero: {
+      backgroundColor: t.primary,
+      borderBottomLeftRadius: 32,
+      borderBottomRightRadius: 32,
+      paddingHorizontal: spacing.lg,
+      paddingBottom: spacing.xl,
+      justifyContent: 'flex-end',
+      minHeight: 300,
+    },
+    welcomeTitle: { color: t.onPrimary, fontSize: 30, fontWeight: '900', lineHeight: 36, letterSpacing: -0.5 },
+    gRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingHorizontal: spacing.lg, height: 60 },
+    gLabel: { flex: 1, color: t.text, fontSize: 16, fontWeight: '600' },
+    gGap: { height: spacing.md },
     guestWrap: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: spacing.xl },
     guestIcon: { width: 88, height: 88, borderRadius: 44, backgroundColor: t.surface2, alignItems: 'center', justifyContent: 'center' },
     guestTitle: { color: t.text, fontSize: 20, fontWeight: '900', marginTop: spacing.lg },

@@ -48,3 +48,6 @@ export function useTheme(): Theme {
 
 export const spacing = { xs: 4, sm: 8, md: 12, lg: 16, xl: 24 }
 export const radius = { sm: 8, md: 12, lg: 16, pill: 999 }
+
+// Escala energética (verde → naranja) para los sectores hero.
+export const gradienteEnergia = ['#3DA935', '#A9CE36', '#FFD400', '#F6A623', '#EA6A34'] as const

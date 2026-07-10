@@ -143,7 +143,7 @@ export default function InicioScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: t.bg }}>
       <ScrollView contentContainerStyle={{ paddingBottom: spacing.xl }} showsVerticalScrollIndicator={false}>
-        {/* ===== ZONA ÁMBAR ===== */}
+        {/* ===== HERO (ámbar; degradé energético pendiente — ver HeroBands) ===== */}
         <View style={[s.hero, { paddingTop: insets.top + 8 }]}>
           <View style={s.topRow}>
             <Pressable style={s.locRow} onPress={() => setShowUbic(true)}>
