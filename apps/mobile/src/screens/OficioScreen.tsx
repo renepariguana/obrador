@@ -4,12 +4,14 @@ import { AppHeader } from '../components/AppHeader'
 import { Icon } from '../components/Icon'
 import { useTheme, spacing, radius, Theme } from '../lib/theme'
 import { porOficio, Profesional } from '../data/profesionales'
+import { useZona } from '../lib/zona'
 
 export default function OficioScreen({ route, navigation }: any) {
   const t = useTheme()
   const s = styles(t)
+  const { zona } = useZona()
   const oficio: string = route?.params?.oficio ?? 'Profesionales'
-  const data = porOficio(oficio)
+  const data = porOficio(oficio, zona)
 
   const renderItem = ({ item, index }: { item: Profesional; index: number }) => {
     const top = index === 0
@@ -82,7 +84,9 @@ export default function OficioScreen({ route, navigation }: any) {
         renderItem={renderItem}
         contentContainerStyle={{ padding: spacing.md, gap: spacing.sm }}
         ListHeaderComponent={
-          <Text style={s.hint}>Ordenados por puntaje — el que más cobró por la app aparece primero</Text>
+          <Text style={s.hint}>
+            {zona} · ordenados por puntaje (el que más cobró por la app aparece primero)
+          </Text>
         }
       />
     </View>

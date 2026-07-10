@@ -14,6 +14,7 @@ export type Pedido = {
   hace: string
   postulados: number
   min: number
+  urgente?: boolean
 }
 
 export const PEDIDOS: Pedido[] = [
@@ -31,6 +32,7 @@ export const PEDIDOS: Pedido[] = [
     hace: 'hace 5 min',
     postulados: 2,
     min: 13,
+    urgente: true,
   },
   {
     id: '2',
@@ -46,6 +48,7 @@ export const PEDIDOS: Pedido[] = [
     hace: 'hace 12 min',
     postulados: 1,
     min: 13,
+    urgente: true,
   },
   {
     id: '3',
@@ -55,7 +58,7 @@ export const PEDIDOS: Pedido[] = [
     desc: 'Levantar pared',
     cliente: 'Rosa M.',
     dist: '1,1 km',
-    zona: 'San Miguel de Tucumán',
+    zona: 'Barrio Norte',
     tag: 'Albañilería',
     quote: 'Quiero levantar una pared de 3x2 en el fondo para dividir el patio. Paso medidas por chat.',
     hace: 'hace 25 min',
@@ -70,7 +73,7 @@ export const PEDIDOS: Pedido[] = [
     desc: 'Pintar living',
     cliente: 'Diego S.',
     dist: '1,4 km',
-    zona: 'San Miguel de Tucumán',
+    zona: 'Yerba Buena',
     tag: 'Pintura',
     quote: 'Necesito pintar living y comedor, unos 30 m². Ya tengo la pintura comprada.',
     hace: 'hace 40 min',
@@ -85,11 +88,25 @@ export const PEDIDOS: Pedido[] = [
     desc: 'Revisar estufa',
     cliente: 'Ana L.',
     dist: '1,8 km',
-    zona: 'San Miguel de Tucumán',
+    zona: 'Barrio Norte',
     tag: 'Gas',
     quote: 'La estufa tira olor a gas cuando la prendo. Necesito un gasista matriculado.',
     hace: 'hace 1 h',
     postulados: 0,
     min: 15,
+    urgente: true,
   },
 ]
+
+const km = (d: string) => parseFloat(d.replace(',', '.')) || 0
+
+// Todos los pedidos, ordenados por cercanía: primero los de tu zona, después el
+// resto por distancia. No esconde los de otras zonas.
+export function pedidosDeZona(zona?: string): Pedido[] {
+  return PEDIDOS.slice().sort((a, b) => {
+    const za = a.zona === zona ? 0 : 1
+    const zb = b.zona === zona ? 0 : 1
+    if (za !== zb) return za - zb
+    return km(a.dist) - km(b.dist)
+  })
+}

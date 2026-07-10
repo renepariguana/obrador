@@ -2,17 +2,15 @@ import React, { useRef, useEffect } from 'react'
 import { View, Text, StyleSheet } from 'react-native'
 import { WebView } from 'react-native-webview'
 import { useTheme } from '../lib/theme'
-import { PEDIDOS } from '../data/pedidos'
+import { PEDIDOS, Pedido } from '../data/pedidos'
 
 // La API key va en .env (EXPO_PUBLIC_GOOGLE_MAPS_JS_KEY) — nunca hardcodeada.
 const GOOGLE_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_JS_KEY ?? ''
 
-const MARKERS = PEDIDOS.map((p) => ({ lat: p.lat, lng: p.lng, oficio: p.oficio, desc: p.desc, min: p.min }))
-
 const PERSON_SVG =
   '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#6B7280" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>'
 
-const html = (key: string) => `<!DOCTYPE html>
+const html = (key: string, markers: { lat: number; lng: number; oficio: string; desc: string; min: number }[]) => `<!DOCTYPE html>
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -35,7 +33,7 @@ const html = (key: string) => `<!DOCTYPE html>
 <body>
 <div id="map"></div>
 <script>
-  const PEDIDOS = ${JSON.stringify(MARKERS)};
+  const PEDIDOS = ${JSON.stringify(markers)};
   const CENTER = { lat: -26.8241, lng: -65.2226 };
   const ICO = '${PERSON_SVG}';
   var markers = [], sel = 0, map;
@@ -76,17 +74,20 @@ const html = (key: string) => `<!DOCTYPE html>
 export function MapaPedidos({
   height,
   fill,
+  pedidos = PEDIDOS,
   selected,
   onSelect,
 }: {
   height?: number
   fill?: boolean
+  pedidos?: Pedido[]
   selected?: number
   onSelect?: (i: number) => void
 }) {
   const t = useTheme()
   const ref = useRef<WebView>(null)
   const wrapStyle = fill ? styles.fill : [styles.wrap, { height: height ?? 300 }]
+  const markers = pedidos.map((p) => ({ lat: p.lat, lng: p.lng, oficio: p.oficio, desc: p.desc, min: p.min }))
 
   useEffect(() => {
     if (selected != null && ref.current) {
@@ -111,7 +112,7 @@ export function MapaPedidos({
       <WebView
         ref={ref}
         originWhitelist={['*']}
-        source={{ html: html(GOOGLE_KEY) }}
+        source={{ html: html(GOOGLE_KEY, markers) }}
         style={styles.web}
         scrollEnabled={false}
         showsVerticalScrollIndicator={false}

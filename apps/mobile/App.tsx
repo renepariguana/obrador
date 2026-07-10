@@ -11,11 +11,12 @@ import OficioScreen from './src/screens/OficioScreen'
 import ProfesionalScreen from './src/screens/ProfesionalScreen'
 import MaterialesScreen from './src/screens/MaterialesScreen'
 import TrabajosScreen from './src/screens/TrabajosScreen'
-import ProveedoresScreen from './src/screens/ProveedoresScreen'
+import PedidosScreen from './src/screens/PedidosScreen'
 import MiPerfilScreen from './src/screens/MiPerfilScreen'
 import { ConfirmarUbicacion } from './src/components/ConfirmarUbicacion'
 import { Icon, IconName } from './src/components/Icon'
 import { useTheme } from './src/lib/theme'
+import { ZonaProvider, useZona } from './src/lib/zona'
 
 const Tab = createBottomTabNavigator()
 const Stack = createNativeStackNavigator()
@@ -34,7 +35,7 @@ const TABS: { name: string; comp: React.ComponentType; icon: IconName }[] = [
   { name: 'Inicio', comp: InicioStack, icon: 'home' },
   { name: 'Materiales', comp: MaterialesScreen, icon: 'box' },
   { name: 'Trabajos', comp: TrabajosScreen, icon: 'hand' },
-  { name: 'Pedidos', comp: ProveedoresScreen, icon: 'chat' },
+  { name: 'Pedidos', comp: PedidosScreen, icon: 'chat' },
   { name: 'Mi perfil', comp: MiPerfilScreen, icon: 'user' },
 ]
 
@@ -73,16 +74,33 @@ function RootTabs() {
   )
 }
 
-export default function App() {
+function Root() {
   const scheme = useColorScheme()
+  const { setZona } = useZona()
   const [zonaConfirmada, setZonaConfirmada] = useState(false)
   return (
-    <SafeAreaProvider>
+    <>
       <NavigationContainer theme={scheme === 'dark' ? DarkTheme : DefaultTheme}>
         <StatusBar style="dark" />
         <RootTabs />
       </NavigationContainer>
-      <ConfirmarUbicacion visible={!zonaConfirmada} onConfirm={() => setZonaConfirmada(true)} />
+      <ConfirmarUbicacion
+        visible={!zonaConfirmada}
+        onConfirm={(z) => {
+          if (z) setZona(z)
+          setZonaConfirmada(true)
+        }}
+      />
+    </>
+  )
+}
+
+export default function App() {
+  return (
+    <SafeAreaProvider>
+      <ZonaProvider>
+        <Root />
+      </ZonaProvider>
     </SafeAreaProvider>
   )
 }

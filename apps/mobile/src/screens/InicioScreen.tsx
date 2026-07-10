@@ -6,7 +6,9 @@ import { MapaPedidos } from '../components/MapaPedidos'
 import { ConfirmarUbicacion } from '../components/ConfirmarUbicacion'
 import { Icon, IconName } from '../components/Icon'
 import { useTheme, spacing, radius, Theme } from '../lib/theme'
-import { PROFESIONALES, Profesional } from '../data/profesionales'
+import { cercaDe, Profesional } from '../data/profesionales'
+import { pedidosDeZona } from '../data/pedidos'
+import { useZona } from '../lib/zona'
 
 type Oficio = { label: string; icon: IconName }
 const OFICIOS: Oficio[] = [
@@ -63,7 +65,7 @@ export default function InicioScreen() {
   const insets = useSafeAreaInsets()
   const s = styles(t)
   const navigation = useNavigation<any>()
-  const [zona, setZona] = useState('Tucumán')
+  const { zona, setZona } = useZona()
   const [showUbic, setShowUbic] = useState(false)
 
   const SectionHeader = ({ title, action = 'Ver todos' }: { title: string; action?: string }) => (
@@ -187,7 +189,7 @@ export default function InicioScreen() {
           </Pressable>
         </View>
         <View style={s.mapCard}>
-          <MapaPedidos height={210} />
+          <MapaPedidos height={210} pedidos={pedidosDeZona(zona)} />
         </View>
 
         {/* ===== OFICIOS ===== */}
@@ -211,7 +213,7 @@ export default function InicioScreen() {
 
         {/* ===== PROFESIONALES ===== */}
         <SectionHeader title="Profesionales cerca tuyo" />
-        {renderPros(PROFESIONALES.slice(0, 8))}
+        {renderPros(cercaDe(zona).slice(0, 8))}
 
         {/* NOTA: secciones "Mejores trabajos", "Urgentes cerca tuyo" y
             "Los más valorados" sacadas por ahora (datos y helpers quedan

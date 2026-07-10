@@ -1,10 +1,12 @@
-import React, { useRef, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { View, Text, TextInput, Pressable, ScrollView, StyleSheet, Dimensions } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { MapaPedidos } from '../components/MapaPedidos'
 import { Icon } from '../components/Icon'
+import { FiltrosSheet, Filtros } from '../components/FiltrosSheet'
 import { useTheme, spacing, radius, Theme } from '../lib/theme'
-import { PEDIDOS } from '../data/pedidos'
+import { pedidosDeZona } from '../data/pedidos'
+import { useZona } from '../lib/zona'
 
 const FILTROS = ['Todos', 'Mi rubro', 'Urgentes', 'Hoy']
 const { width } = Dimensions.get('window')
@@ -13,9 +15,25 @@ export default function TrabajosScreen() {
   const t = useTheme()
   const insets = useSafeAreaInsets()
   const s = styles(t)
+  const { zona } = useZona()
+  const [filtros, setFiltros] = useState<Filtros>({ zona: null, rubro: null, urgente: false })
+  const [showFiltros, setShowFiltros] = useState(false)
   const [filtro, setFiltro] = useState('Todos')
   const [sel, setSel] = useState(0)
   const scrollRef = useRef<ScrollView>(null)
+  const hayFiltro = filtros.zona !== null || filtros.rubro !== null || filtros.urgente
+
+  // Por defecto: todos (ordenados, tu zona primero). Aplica los filtros elegidos.
+  let PEDIDOS = pedidosDeZona(zona)
+  if (filtros.zona) PEDIDOS = PEDIDOS.filter((p) => p.zona === filtros.zona)
+  if (filtros.rubro) PEDIDOS = PEDIDOS.filter((p) => p.oficio === filtros.rubro)
+  if (filtros.urgente) PEDIDOS = PEDIDOS.filter((p) => p.urgente)
+
+  // Al cambiar de zona o de filtros, la lista cambia → volver al primero
+  useEffect(() => {
+    setSel(0)
+    scrollRef.current?.scrollTo({ x: 0, animated: false })
+  }, [zona, filtros])
 
   // Tocaste un globo en el mapa → mover el carrusel a ese pedido
   const onMapSelect = (i: number) => {
@@ -31,7 +49,7 @@ export default function TrabajosScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: t.bg }}>
-      <MapaPedidos fill selected={sel} onSelect={onMapSelect} />
+      <MapaPedidos fill pedidos={PEDIDOS} selected={sel} onSelect={onMapSelect} />
 
       {/* ===== Overlays superiores ===== */}
       <View style={[s.top, { paddingTop: insets.top + 8 }]} pointerEvents="box-none">
@@ -40,12 +58,12 @@ export default function TrabajosScreen() {
             <Icon name="search" size={20} color={t.text3} />
             <TextInput
               style={s.searchInput}
-              placeholder="Pedidos en tu zona…"
+              placeholder="¿Qué necesitás hacer?"
               placeholderTextColor={t.text3}
             />
           </View>
-          <Pressable style={s.fbtn}>
-            <Icon name="filter" size={20} color={t.text} />
+          <Pressable style={[s.fbtn, hayFiltro && s.fbtnOn]} onPress={() => setShowFiltros(true)}>
+            <Icon name="filter" size={20} color={hayFiltro ? t.onPrimary : t.text} />
           </Pressable>
         </View>
 
@@ -69,6 +87,15 @@ export default function TrabajosScreen() {
 
       {/* ===== Carrusel de pedidos (deslizable) ===== */}
       <View style={[s.bottom, { paddingBottom: insets.bottom }]} pointerEvents="box-none">
+        {PEDIDOS.length === 0 ? (
+          <View style={{ paddingHorizontal: spacing.md }}>
+            <View style={s.detail}>
+              <Text style={s.detailName}>Sin pedidos con esos filtros</Text>
+              <Text style={s.detailMeta}>Probá quitar algún filtro o cambiar de zona.</Text>
+            </View>
+          </View>
+        ) : (
+          <>
         <ScrollView
           ref={scrollRef}
           horizontal
@@ -125,7 +152,19 @@ export default function TrabajosScreen() {
             <View key={p.id} style={[s.dot, i === sel && s.dotOn]} />
           ))}
         </View>
+          </>
+        )}
       </View>
+
+      <FiltrosSheet
+        visible={showFiltros}
+        value={filtros}
+        onApply={(f) => {
+          setFiltros(f)
+          setShowFiltros(false)
+        }}
+        onClose={() => setShowFiltros(false)}
+      />
     </View>
   )
 }
@@ -163,6 +202,7 @@ const styles = (t: Theme) =>
       shadowOffset: { width: 0, height: 3 },
       elevation: 3,
     },
+    fbtnOn: { backgroundColor: t.primary },
     livePill: {
       flexDirection: 'row',
       alignItems: 'center',

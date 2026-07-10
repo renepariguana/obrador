@@ -9,28 +9,44 @@ export type Profesional = {
   reviews: number
   verificado: boolean
   dist: string
+  zona: string
 }
 
 export const PROFESIONALES: Profesional[] = [
-  { id: 'p1', nombre: 'Carlos Gómez', oficio: 'Plomero', rating: 4.9, puntos: 1280, reviews: 214, verificado: true, dist: '0,6 km' },
-  { id: 'p2', nombre: 'Marta Ruiz', oficio: 'Pintor', rating: 4.8, puntos: 1150, reviews: 176, verificado: true, dist: '1,2 km' },
-  { id: 'p3', nombre: 'Diego Sosa', oficio: 'Electricista', rating: 4.7, puntos: 990, reviews: 143, verificado: false, dist: '0,9 km' },
-  { id: 'p4', nombre: 'Ana Paredes', oficio: 'Albañil', rating: 4.9, puntos: 1540, reviews: 260, verificado: true, dist: '1,5 km' },
-  { id: 'p5', nombre: 'Roberto Molina', oficio: 'Albañil', rating: 4.8, puntos: 1320, reviews: 198, verificado: true, dist: '2,1 km' },
-  { id: 'p6', nombre: 'Lucía Ferreyra', oficio: 'Albañil', rating: 4.6, puntos: 870, reviews: 96, verificado: false, dist: '0,8 km' },
-  { id: 'p7', nombre: 'Jorge Vera', oficio: 'Carpintero', rating: 4.9, puntos: 1410, reviews: 231, verificado: true, dist: '1,1 km' },
-  { id: 'p8', nombre: 'Sofía Torres', oficio: 'Plomero', rating: 4.8, puntos: 1090, reviews: 155, verificado: true, dist: '1,8 km' },
-  { id: 'p9', nombre: 'Miguel Ríos', oficio: 'Electricista', rating: 4.9, puntos: 1360, reviews: 205, verificado: true, dist: '0,7 km' },
-  { id: 'p10', nombre: 'Elena Cabrera', oficio: 'Pintor', rating: 4.7, puntos: 940, reviews: 121, verificado: false, dist: '2,4 km' },
-  { id: 'p11', nombre: 'Pedro Juárez', oficio: 'Albañil', rating: 4.7, puntos: 1010, reviews: 132, verificado: true, dist: '1,3 km' },
-  { id: 'p12', nombre: 'Natalia Vega', oficio: 'Herrero', rating: 4.8, puntos: 1180, reviews: 167, verificado: true, dist: '1,9 km' },
+  { id: 'p1', nombre: 'Carlos Gómez', oficio: 'Plomero', rating: 4.9, puntos: 1280, reviews: 214, verificado: true, dist: '0,6 km', zona: 'San Miguel de Tucumán' },
+  { id: 'p2', nombre: 'Marta Ruiz', oficio: 'Pintor', rating: 4.8, puntos: 1150, reviews: 176, verificado: true, dist: '1,2 km', zona: 'Barrio Norte' },
+  { id: 'p3', nombre: 'Diego Sosa', oficio: 'Electricista', rating: 4.7, puntos: 990, reviews: 143, verificado: false, dist: '0,9 km', zona: 'San Miguel de Tucumán' },
+  { id: 'p4', nombre: 'Ana Paredes', oficio: 'Albañil', rating: 4.9, puntos: 1540, reviews: 260, verificado: true, dist: '1,5 km', zona: 'San Miguel de Tucumán' },
+  { id: 'p5', nombre: 'Roberto Molina', oficio: 'Albañil', rating: 4.8, puntos: 1320, reviews: 198, verificado: true, dist: '2,1 km', zona: 'Yerba Buena' },
+  { id: 'p6', nombre: 'Lucía Ferreyra', oficio: 'Albañil', rating: 4.6, puntos: 870, reviews: 96, verificado: false, dist: '0,8 km', zona: 'Barrio Norte' },
+  { id: 'p7', nombre: 'Jorge Vera', oficio: 'Carpintero', rating: 4.9, puntos: 1410, reviews: 231, verificado: true, dist: '1,1 km', zona: 'San Miguel de Tucumán' },
+  { id: 'p8', nombre: 'Sofía Torres', oficio: 'Plomero', rating: 4.8, puntos: 1090, reviews: 155, verificado: true, dist: '1,8 km', zona: 'Yerba Buena' },
+  { id: 'p9', nombre: 'Miguel Ríos', oficio: 'Electricista', rating: 4.9, puntos: 1360, reviews: 205, verificado: true, dist: '0,7 km', zona: 'Barrio Norte' },
+  { id: 'p10', nombre: 'Elena Cabrera', oficio: 'Pintor', rating: 4.7, puntos: 940, reviews: 121, verificado: false, dist: '2,4 km', zona: 'Yerba Buena' },
+  { id: 'p11', nombre: 'Pedro Juárez', oficio: 'Albañil', rating: 4.7, puntos: 1010, reviews: 132, verificado: true, dist: '1,3 km', zona: 'San Miguel de Tucumán' },
+  { id: 'p12', nombre: 'Natalia Vega', oficio: 'Herrero', rating: 4.8, puntos: 1180, reviews: 167, verificado: true, dist: '1,9 km', zona: 'San Miguel de Tucumán' },
 ]
 
-// Profesionales de un oficio, ordenados por puntos (ranking). Si no hay del
-// oficio pedido, devuelve todos ordenados.
-export function porOficio(oficio: string): Profesional[] {
+// Ordena poniendo primero los de tu zona (sin esconder el resto), y desempata
+// por el criterio dado.
+function ordenarPorZona(list: Profesional[], zona: string | undefined, metric: (p: Profesional) => number) {
+  return list.slice().sort((a, b) => {
+    const za = a.zona === zona ? 0 : 1
+    const zb = b.zona === zona ? 0 : 1
+    if (za !== zb) return za - zb
+    return metric(b) - metric(a)
+  })
+}
+
+// Todos los profesionales de un oficio (ranking por puntos), los de tu zona primero.
+export function porOficio(oficio: string, zona?: string): Profesional[] {
   const list = PROFESIONALES.filter((p) => p.oficio === oficio)
-  return (list.length ? list : PROFESIONALES).slice().sort((a, b) => b.puntos - a.puntos)
+  return ordenarPorZona(list.length ? list : PROFESIONALES, zona, (p) => p.puntos)
+}
+
+// Todos los profesionales (por rating), los de tu zona primero.
+export function cercaDe(zona?: string): Profesional[] {
+  return ordenarPorZona(PROFESIONALES, zona, (p) => p.rating)
 }
 
 // Trabajos ya realizados por un profesional (su portfolio).

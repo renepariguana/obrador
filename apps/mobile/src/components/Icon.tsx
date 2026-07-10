@@ -47,10 +47,14 @@ export function Icon({
   name,
   size = 24,
   color = '#16181D',
+  strokeWidth = 1.9,
+  filled = false,
 }: {
   name: IconName
   size?: number
   color?: string
+  strokeWidth?: number
+  filled?: boolean
 }) {
   const render = ICONS[name]
   return (
@@ -59,9 +63,9 @@ export function Icon({
       height={size}
       viewBox="0 0 24 24"
       color={color}
-      fill="none"
+      fill={filled ? color : 'none'}
       stroke={color}
-      strokeWidth={1.9}
+      strokeWidth={strokeWidth}
       strokeLinecap="round"
       strokeLinejoin="round"
     >
