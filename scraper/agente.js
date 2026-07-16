@@ -13,17 +13,18 @@ const PRES = path.resolve(__dirname, '../../Presupuestador/scrapers')
 const MODULOS = { easy: 'node scrape-easy.js', emi: 'node scrape-emi.js', maderplak: 'node scrape-maderplak.js' }
 
 async function proveedoresActivos() {
-  const rows = (await getValues('Proveedores!A1:Z100')) || []
+  const rows = (await getValues('Proveedores!A1:Z3000')) || []
   if (!rows.length) return []
   const h = rows[0].map((x) => (x || '').trim())
   const ci = (re) => h.findIndex((x) => re.test(x))
-  const si = ci(/slug/i), ui = ci(/url/i), ti = ci(/tipo/i), ai = ci(/^activo$/i), ni = ci(/nombre|proveedor/i)
+  const si = ci(/slug/i), ui = ci(/url|web/i), ti = ci(/tipo|plataforma/i), ei = ci(/escrapeado/i), ai = ci(/^activo$/i), ni = ci(/nombre|proveedor/i)
   const out = []
   for (let i = 1; i < rows.length; i++) {
     const slug = (si !== -1 ? rows[i][si] || '' : '').trim()
     if (!slug) continue
-    const activo = (ai !== -1 ? rows[i][ai] || '' : '').trim().toUpperCase()
-    if (ai !== -1 && activo && activo !== 'ACTIVO') continue
+    const esc = rows[i][ei] === true || String(ei !== -1 ? rows[i][ei] : '').toUpperCase() === 'TRUE'
+    const activoViejo = ai !== -1 && (rows[i][ai] || '').trim().toUpperCase() === 'ACTIVO'
+    if (ei !== -1 ? !esc : !activoViejo) continue // solo los scrapeados
     out.push({
       slug,
       url: (ui !== -1 ? rows[i][ui] || '' : '').trim(),
@@ -49,6 +50,7 @@ async function main() {
     if (MODULOS[p.slug]) cmd = MODULOS[p.slug]
     else if (p.tipo === 'vtex') cmd = `node scrape-vtex.js "${p.url}" "${p.slug}"`
     else if (p.tipo === 'algolia') cmd = `node scrape-algolia.js "${p.url}" "${p.slug}"`
+    else if (p.tipo === 'woo') cmd = `node scrape-woo.js "${p.url}" "${p.slug}"`
     else { sinScraper.push(p); continue }
     console.log(`\n▶ Scrapeando ${p.nombre}…`)
     if (!correr(cmd, PRES)) console.error(`❌ ${p.nombre} falló al scrapear`)

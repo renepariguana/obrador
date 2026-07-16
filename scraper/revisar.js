@@ -53,7 +53,7 @@ async function traerMateriales() {
 // Asegura una columna RUBRO en la pestaña Proveedores (la completás vos por proveedor) y devuelve
 // el mapa { nombreProveedor: rubro } para auto-completar el RUBRO en cada pestaña.
 async function rubrosProveedores() {
-  const rows = (await getValues('Proveedores!A1:Z100')) || []
+  const rows = (await getValues('Proveedores!A1:Z3000')) || []
   if (!rows.length) return {}
   const header = rows[0].map((h) => (h || '').trim())
   const ni = header.findIndex((h) => /nombre|proveedor/i.test(h))
@@ -188,8 +188,7 @@ async function main() {
     vistos[n] = vistos[n] || new Set()
     if (!vistos[n].has(m.nombre)) { vistos[n].add(m.nombre); conteo[n] = (conteo[n] || 0) + 1 }
   }
-  await actualizarProveedores(conteo)
-  await desplegablesProveedores()
+  // La tabla "Proveedores" ahora la mantiene descubrir.js (tabla única) — revisar no la reescribe.
   console.log('Listo — pestañas + compilación "Materiales" + conteos en Proveedores.')
 }
 

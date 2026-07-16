@@ -59,19 +59,19 @@ function normalizarCategoria(cat, nombre) {
 
 // Proveedores ACTIVOS de la pestaña Proveedores → { slug, tipo }.
 async function proveedoresActivos() {
-  const rows = (await getValues('Proveedores!A1:Z100')) || []
+  const rows = (await getValues('Proveedores!A1:Z3000')) || []
   if (!rows.length) return []
   const h = rows[0].map((x) => (x || '').trim())
   const ci = (re) => h.findIndex((x) => re.test(x))
-  const si = ci(/slug/i)
-  const ti = ci(/tipo/i)
-  const ai = ci(/^activo$/i)
+  const si = ci(/slug/i), ti = ci(/tipo|plataforma/i), ei = ci(/escrapeado/i), ai = ci(/^activo$/i)
   const out = []
   for (let i = 1; i < rows.length; i++) {
     const slug = (si !== -1 ? rows[i][si] || '' : '').trim()
     if (!slug) continue
-    const activo = (ai !== -1 ? rows[i][ai] || '' : '').trim().toUpperCase()
-    if (ai !== -1 && activo && activo !== 'ACTIVO') continue // saltear inactivos
+    // scrapeado = check ☑ (o, formato viejo, ACTIVO)
+    const esc = rows[i][ei] === true || String(ei !== -1 ? rows[i][ei] : '').toUpperCase() === 'TRUE'
+    const activoViejo = ai !== -1 && (rows[i][ai] || '').trim().toUpperCase() === 'ACTIVO'
+    if (ei !== -1 ? !esc : !activoViejo) continue
     out.push({ slug, tipo: (ti !== -1 ? rows[i][ti] || '' : '').trim().toLowerCase() })
   }
   return out
@@ -113,7 +113,7 @@ async function main() {
     if (!proveedor_id) { console.warn(`  ⚠️ proveedor "${p.slug}" no está en Supabase (tabla proveedores)`); continue }
     const archivo = path.join(PRES, `${p.slug}-rows.json`)
     if (!fs.existsSync(archivo)) { console.warn(`  ⚠️ no hay scrapeo para "${p.slug}" (${p.slug}-rows.json)`); continue }
-    const formato = p.tipo === 'vtex' ? 'easy' : 'emi' // vtex = número crudo; el resto, formato AR
+    const formato = p.tipo === 'vtex' || p.tipo === 'woo' ? 'easy' : 'emi' // vtex/woo = número crudo; el resto, formato AR
     const seenUrl = new Set()
     const rows = []
     for (const r of JSON.parse(fs.readFileSync(archivo, 'utf8'))) {

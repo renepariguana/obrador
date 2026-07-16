@@ -1,35 +1,37 @@
-// AGENTE DIARIO DE DESCUBRIMIENTO — recorre la lista PROVEEDORES (directorio del mapa) de a tandas y va
-// sumando proveedores scrapeables al comparador, hasta cubrirlos a todos.
-// Cada corrida: 1) sincroniza los proveedores con web a una pestaña de control "Cola"; 2) toma los próximos
-// POR_DIA pendientes; 3) detecta plataforma (VTEX / Algolia / módulo conocido); 4) scrapea los soportados,
-// los registra (Proveedores + Supabase) y sube; 5) marca el estado de cada uno.
-// Uso: node descubrir.js   (o automático por launchd, diario)
+// AGENTE DIARIO — mantiene UNA sola tabla "Proveedores" (reemplaza Proveedores/Cola/Lista/Escrapeados):
+// una fila por proveedor del directorio (Sheet "PROVEEDORES" → pestaña Guia), con web/plataforma/estado/
+// productos y un check ☑ (scrapeado). Cada corrida: sincroniza el directorio, marca los ya scrapeados
+// (desde Supabase), procesa POR_DIA pendientes con web (detecta VTEX/Algolia/WooCommerce y scrapea),
+// registra y sube. Los scrapers viven en Presupuestador/scrapers. Uso: node descubrir.js (o launchd diario).
 require('dotenv').config()
 const fs = require('fs')
 const path = require('path')
 const https = require('https')
 const { execSync } = require('child_process')
 const { createClient } = require('@supabase/supabase-js')
-const { getValues, updateValues, addSheetIfMissing, accessToken } = require('./gsheets')
+const { getValues, updateValues, addSheetIfMissing, accessToken, SHEET_ID } = require('./gsheets')
 
 const DIR_SID = '1-Khv4JD9ilcuzJZj_J6sMLaw7aZ1m2u9LZUsZrLnsH0' // Sheet "PROVEEDORES" (directorio del mapa)
 const PRES = path.resolve(__dirname, '../../Presupuestador/scrapers')
-const COLA = 'Cola'
+const TAB = 'Proveedores'
 const POR_DIA = 10
-const COLS = ['PROVEEDOR', 'PROVINCIA', 'WEB', 'SLUG', 'PLATAFORMA', 'ESTADO', 'ULTIMO_SCRAPE', 'PRODUCTOS', 'NOTA']
-const KNOWN = { easy: 'vtex', emi: 'puppeteer', maderplak: 'algolia' } // ya soportados
+const COLS = ['PROVEEDOR', 'RUBRO', 'PROVINCIA', 'WEB', 'SLUG', 'TIPO', 'ESTADO', 'PRODUCTOS', 'ULTIMO_SCRAPE', 'ESCRAPEADO']
+const IESC = COLS.indexOf('ESCRAPEADO')
+const PRESERVAR = ['RUBRO'] // lo carga el usuario, no se pisa
+const KNOWN = { easy: 'vtex', emi: 'puppeteer', maderplak: 'algolia' }
 
 const sb = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SECRET_KEY, { auth: { persistSession: false } })
 const colL = (i) => String.fromCharCode(65 + i)
 const norm = (s) => (s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim()
 const normUrl = (u) => { u = (u || '').trim(); if (!/^https?:\/\//.test(u)) u = 'https://' + u; return u.replace(/\/+$/, '') }
+const tieneWeb = (w) => /\./.test(w || '') && !/@/.test(w || '')
 function slugDe(nombre) {
   const k = norm(nombre)
-  if (KNOWN[k]) return k // easy / emi / maderplak
-  return norm(nombre).replace(/&/g, ' y ').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'prov'
+  if (KNOWN[k]) return k
+  return k.replace(/&/g, ' y ').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'prov'
 }
 
-// GET con timeout, sigue redirects y devuelve el body parcial si el sitio es lento (para detectar plataforma).
+// GET con timeout, sigue redirects, devuelve body parcial si el sitio es lento.
 function get(url, ms = 12000, redirects = 4) {
   return new Promise((res) => {
     let done = false, body = ''
@@ -52,17 +54,18 @@ function get(url, ms = 12000, redirects = 4) {
   })
 }
 
-// Directorio de proveedores con web (únicos por nombre).
+// Directorio: TODOS los proveedores (con y sin web), únicos por nombre.
 async function directorio() {
   const tok = await accessToken()
   let rows = []
-  for (let a = 0; a < 3 && !rows.length; a++) {
+  for (let a = 0; a < 5 && !rows.length; a++) {
     try {
-      const j = await (await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${DIR_SID}/values/Hoja1!A1:J3000`, { headers: { Authorization: 'Bearer ' + tok } })).json()
+      const j = await (await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${DIR_SID}/values/Guia!A1:J3000`, { headers: { Authorization: 'Bearer ' + tok } })).json()
       rows = j.values || []
-    } catch (e) { await new Promise((r) => setTimeout(r, 1500)) }
+    } catch (e) {}
+    if (!rows.length) await new Promise((r) => setTimeout(r, 2000))
   }
-  if (!rows.length) throw new Error('no pude leer el directorio PROVEEDORES')
+  if (!rows.length) throw new Error('no pude leer el directorio PROVEEDORES (Guia)')
   const h = rows[0].map((x) => (x || '').trim())
   const pi = h.findIndex((x) => /proveedor/i.test(x)), vi = h.findIndex((x) => /provincia/i.test(x)), wi = h.findIndex((x) => /sitio web/i.test(x))
   const map = new Map()
@@ -72,98 +75,124 @@ async function directorio() {
     if (!map.has(nombre)) map.set(nombre, { nombre, provincia: prov, web })
     else if (!map.get(nombre).web && web) map.get(nombre).web = web
   }
-  return [...map.values()].filter((p) => /\./.test(p.web) && !/@/.test(p.web)) // solo con web tipo URL
+  return [...map.values()]
 }
 
-// Lee la Cola como Map<nombre, obj> + orden.
-async function leerCola() {
-  await addSheetIfMissing(COLA)
-  const rows = (await getValues(`${COLA}!A1:Z3000`)) || []
-  const cola = new Map(), order = []
-  if (!rows.length || !(rows[0] || []).length) return { cola, order }
-  const header = rows[0].map((x) => (x || '').trim().toUpperCase())
-  const idx = {}; COLS.forEach((c) => (idx[c] = header.indexOf(c)))
-  for (const r of rows.slice(1)) {
-    const nombre = (idx.PROVEEDOR >= 0 ? r[idx.PROVEEDOR] : '') || ''
-    if (!nombre.trim()) continue
-    const o = {}; COLS.forEach((c) => (o[c] = (idx[c] >= 0 ? r[idx[c]] : '') || ''))
-    cola.set(nombre.trim(), o); order.push(nombre.trim())
+// Proveedores ya scrapeados (Supabase): normSlug -> { count, url, nombre, slug }
+async function scrapeados() {
+  const { data: provs } = await sb.from('proveedores').select('id,slug,nombre,url')
+  const map = new Map()
+  for (const p of provs || []) {
+    const { count } = await sb.from('materiales').select('*', { count: 'exact', head: true }).eq('proveedor_id', p.id).eq('activo', true)
+    if (count > 0) map.set(norm(p.slug), { count, url: p.url || '', nombre: p.nombre, slug: p.slug })
   }
-  return { cola, order }
-}
-async function guardarCola(order, cola) {
-  const out = [COLS, ...order.map((n) => COLS.map((c) => cola.get(n)[c] ?? ''))]
-  const total = Math.max(out.length, 2000)
-  const filas = Array.from({ length: total }, (_, i) => out[i] || COLS.map(() => ''))
-  await updateValues(`${COLA}!A1:${colL(COLS.length - 1)}${total}`, filas)
+  return map
 }
 
-// Detecta la plataforma de una web: 'vtex' | 'algolia' | 'otro' | 'caido'.
+async function leerTabla() {
+  await addSheetIfMissing(TAB)
+  const rows = (await getValues(`${TAB}!A1:Z3000`)) || []
+  const tabla = new Map(), order = []
+  if (!rows.length || !(rows[0] || []).length) return { tabla, order }
+  const header = rows[0].map((x) => (x || '').trim().toUpperCase())
+  const at = (c, r) => { const i = header.indexOf(c); return i >= 0 ? r[i] : '' }
+  // alias URL->WEB, PLATAFORMA->TIPO por si venía del formato viejo
+  const web = (r) => at('WEB', r) || at('URL', r) || ''
+  const tipo = (r) => at('TIPO', r) || at('PLATAFORMA', r) || ''
+  for (const r of rows.slice(1)) {
+    const nombre = (at('PROVEEDOR', r) || at('NOMBRE', r) || '').trim()
+    if (!nombre) continue
+    tabla.set(nombre, {
+      PROVEEDOR: nombre, RUBRO: (at('RUBRO', r) || '').trim(), PROVINCIA: (at('PROVINCIA', r) || '').trim(),
+      WEB: (web(r) || '').trim(), SLUG: (at('SLUG', r) || '').trim(), TIPO: (tipo(r) || '').trim(),
+      ESTADO: (at('ESTADO', r) || '').trim(), PRODUCTOS: at('PRODUCTOS', r) || '', ULTIMO_SCRAPE: (at('ULTIMO_SCRAPE', r) || at('ULTIMO', r) || '').trim(),
+      ESCRAPEADO: at('ESCRAPEADO', r) === true || String(at('ESCRAPEADO', r)).toUpperCase() === 'TRUE',
+    })
+    order.push(nombre)
+  }
+  return { tabla, order }
+}
+
+async function guardarTabla(order, tabla) {
+  const filas = order.map((n) => COLS.map((c) => tabla.get(n)[c]))
+  const values = [COLS, ...filas]
+  const total = Math.max(values.length, 2000)
+  const out = Array.from({ length: total }, (_, i) => values[i] || COLS.map((c, j) => (j === IESC ? false : '')))
+  await updateValues(`${TAB}!A1:${colL(COLS.length - 1)}${total}`, out, 'USER_ENTERED')
+  // checkbox en la columna ESCRAPEADO
+  const tok = await accessToken()
+  const meta = await (await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}?fields=sheets(properties(sheetId,title))`, { headers: { Authorization: 'Bearer ' + tok } })).json()
+  const sid = (meta.sheets.find((s) => s.properties.title === TAB) || {}).properties.sheetId
+  await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}:batchUpdate`, {
+    method: 'POST', headers: { Authorization: 'Bearer ' + tok, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ requests: [
+      { setDataValidation: { range: { sheetId: sid, startRowIndex: 1, endRowIndex: total, startColumnIndex: 0, endColumnIndex: IESC } } }, // limpia desplegables viejos de A..I
+      { setDataValidation: { range: { sheetId: sid, startRowIndex: 1, endRowIndex: total, startColumnIndex: IESC, endColumnIndex: IESC + 1 }, rule: { condition: { type: 'BOOLEAN' }, showCustomUi: true } } },
+      { setBasicFilter: { filter: { range: { sheetId: sid, startRowIndex: 0, endRowIndex: total, startColumnIndex: 0, endColumnIndex: COLS.length } } } },
+    ] }),
+  })
+}
+
+// Detecta plataforma: 'vtex' | 'algolia' | 'woo' | 'otro' | 'caido'.
 async function detectar(base) {
-  const vt = await get(base + '/api/catalog_system/pub/category/tree/1', 12000)
+  const vt = await get(base + '/api/catalog_system/pub/category/tree/1')
   if (typeof vt.b === 'string' && vt.b.trim().startsWith('[')) return 'vtex'
-  const pg = await get(base, 12000)
+  const pg = await get(base)
   if (pg.err) return 'caido'
   if (/algoliaConfig|algolianet|algolia\.net/i.test(pg.b || '')) return 'algolia'
+  for (const p of ['/wp-json/wc/store/v1/products?per_page=1', '/wp-json/wc/store/products?per_page=1']) {
+    const w = await get(base + p, 10000)
+    if (typeof w.b === 'string' && w.b.trim().startsWith('[') && /price/.test(w.b)) return 'woo'
+  }
   return 'otro'
 }
 
-// Registra un proveedor scrapeado en Supabase (proveedores) y en la pestaña Proveedores del comparador.
+// Alta en Supabase (tabla proveedores) de los nuevos scrapeados.
 async function registrar(nuevos) {
-  // Supabase proveedores
   await sb.from('proveedores').upsert(
     nuevos.map((c) => ({ nombre: c.PROVEEDOR, slug: c.SLUG, url: normUrl(c.WEB), provincia: c.PROVINCIA || 'Tucumán' })),
     { onConflict: 'slug' },
   )
-  // pestaña Proveedores (agrega los que falten)
-  const rows = (await getValues('Proveedores!A1:Z200')) || []
-  const header = rows[0].map((h) => (h || '').trim())
-  const ci = (re) => header.findIndex((h) => re.test(h))
-  const iNom = ci(/nombre|proveedor/i), iUrl = ci(/url/i), iSlug = ci(/slug/i), iTipo = ci(/tipo/i), iAct = ci(/^activo$/i), iProv = ci(/provincia/i)
-  const existentes = new Set(rows.slice(1).map((r) => (iSlug >= 0 ? (r[iSlug] || '').trim() : '')))
-  const nuevasFilas = []
-  for (const c of nuevos) {
-    if (existentes.has(c.SLUG)) continue
-    const fila = header.map(() => '')
-    if (iNom >= 0) fila[iNom] = c.PROVEEDOR
-    if (iUrl >= 0) fila[iUrl] = normUrl(c.WEB)
-    if (iSlug >= 0) fila[iSlug] = c.SLUG
-    if (iTipo >= 0) fila[iTipo] = c.PLATAFORMA
-    if (iAct >= 0) fila[iAct] = 'ACTIVO'
-    if (iProv >= 0) fila[iProv] = c.PROVINCIA || 'Tucumán'
-    nuevasFilas.push(fila)
-  }
-  if (nuevasFilas.length) {
-    const start = rows.length + 1
-    await updateValues(`Proveedores!A${start}:${colL(header.length - 1)}${start + nuevasFilas.length - 1}`, nuevasFilas)
-  }
 }
 
 async function main() {
   const dir = await directorio()
-  const { cola, order } = await leerCola()
+  const scrap = await scrapeados()
+  const { tabla, order } = await leerTabla()
 
-  // sincronizar nuevos proveedores con web a la cola
+  // sincronizar TODOS los proveedores del directorio
   for (const p of dir) {
-    if (!cola.has(p.nombre)) {
-      const slug = slugDe(p.nombre)
-      const known = KNOWN[slug]
-      cola.set(p.nombre, {
-        PROVEEDOR: p.nombre, PROVINCIA: p.provincia, WEB: p.web, SLUG: slug,
-        PLATAFORMA: known || '', ESTADO: known ? 'scrapeado' : 'pendiente',
-        ULTIMO_SCRAPE: '', PRODUCTOS: '', NOTA: known ? 'ya soportado' : '',
+    if (!tabla.has(p.nombre)) {
+      tabla.set(p.nombre, {
+        PROVEEDOR: p.nombre, RUBRO: '', PROVINCIA: p.provincia, WEB: p.web, SLUG: slugDe(p.nombre),
+        TIPO: '', ESTADO: tieneWeb(p.web) ? 'pendiente' : 'sin-web', PRODUCTOS: '', ULTIMO_SCRAPE: '', ESCRAPEADO: false,
       })
       order.push(p.nombre)
     } else {
-      const c = cola.get(p.nombre)
+      const c = tabla.get(p.nombre)
       if (p.web && c.WEB !== p.web) c.WEB = p.web
       if (!c.SLUG) c.SLUG = slugDe(p.nombre)
+      if (!c.PROVINCIA) c.PROVINCIA = p.provincia
+      if (!c.ESTADO) c.ESTADO = tieneWeb(c.WEB) ? 'pendiente' : 'sin-web'
     }
   }
 
-  const pendientes = order.map((n) => cola.get(n)).filter((c) => ['pendiente', 'caido', 'caído'].includes((c.ESTADO || '').toLowerCase()))
-  const batch = pendientes.slice(0, POR_DIA)
-  console.log(`Cola: ${order.length} con web | pendientes: ${pendientes.length} | proceso hoy: ${batch.length}`)
+  // marcar los ya scrapeados (Supabase) — agrega los que no estén en el directorio (ej. Easy)
+  for (const [k, info] of scrap) {
+    let row = [...tabla.values()].find((c) => norm(c.SLUG) === k)
+    if (!row) {
+      row = { PROVEEDOR: info.nombre, RUBRO: '', PROVINCIA: '', WEB: info.url, SLUG: info.slug, TIPO: '', ESTADO: '', PRODUCTOS: '', ULTIMO_SCRAPE: '', ESCRAPEADO: false }
+      tabla.set(info.nombre, row); order.push(info.nombre)
+    }
+    row.ESCRAPEADO = true; row.ESTADO = 'scrapeado'; row.PRODUCTOS = info.count
+    if (!row.WEB) row.WEB = info.url
+    if (!row.TIPO) row.TIPO = KNOWN[k] || row.TIPO
+  }
+
+  // batch del día: con web, pendiente/caido, no scrapeado
+  const pend = order.map((n) => tabla.get(n)).filter((c) => tieneWeb(c.WEB) && ['pendiente', 'caido', 'caído'].includes((c.ESTADO || '').toLowerCase()) && !c.ESCRAPEADO)
+  const batch = pend.slice(0, POR_DIA)
+  console.log(`Tabla: ${order.length} proveedores | pendientes con web: ${pend.length} | proceso hoy: ${batch.length}`)
   const hoy = new Date().toISOString().slice(0, 10)
   const nuevos = []
 
@@ -171,31 +200,31 @@ async function main() {
     const base = normUrl(c.WEB)
     process.stdout.write(`\n▶ ${c.PROVEEDOR} (${base}) … `)
     const plat = await detectar(base)
-    c.PLATAFORMA = plat === 'caido' ? c.PLATAFORMA : plat
     c.ULTIMO_SCRAPE = hoy
-    if (plat === 'caido') { c.ESTADO = 'caido'; c.NOTA = 'no respondió'; process.stdout.write('caído (reintenta)'); continue }
-    if (plat === 'otro') { c.ESTADO = 'necesita-modulo'; c.NOTA = 'plataforma no soportada'; process.stdout.write('necesita módulo'); continue }
-    // scrapear (VTEX o Algolia)
-    const cmd = plat === 'vtex' ? `node scrape-vtex.js "${base}" "${c.SLUG}"` : `node scrape-algolia.js "${base}" "${c.SLUG}"`
+    if (plat === 'caido') { c.ESTADO = 'caido'; process.stdout.write('caído (reintenta)'); continue }
+    c.TIPO = plat
+    if (plat === 'otro') { c.ESTADO = 'necesita-modulo'; process.stdout.write('necesita módulo'); continue }
+    const cmd = plat === 'vtex' ? `node scrape-vtex.js "${base}" "${c.SLUG}"`
+      : plat === 'algolia' ? `node scrape-algolia.js "${base}" "${c.SLUG}"`
+      : `node scrape-woo.js "${base}" "${c.SLUG}"`
     let ok = true
     try { execSync(cmd, { cwd: PRES, stdio: 'ignore', timeout: 300000 }) } catch (e) { ok = false }
     let n = 0
     try { n = JSON.parse(fs.readFileSync(path.join(PRES, `${c.SLUG}-rows.json`), 'utf8')).length } catch (e) {}
-    if (!ok && !n) { c.ESTADO = 'error'; c.NOTA = 'falló el scrape'; process.stdout.write('error'); continue }
-    if (!n) { c.ESTADO = 'sin-catalogo'; c.NOTA = '0 productos con precio/stock'; process.stdout.write('sin catálogo'); continue }
-    c.ESTADO = 'scrapeado'; c.PRODUCTOS = n; c.NOTA = ''; nuevos.push(c)
+    if (!n) { c.ESTADO = ok ? 'sin-catalogo' : 'error'; process.stdout.write(ok ? 'sin catálogo' : 'error'); continue }
+    c.ESTADO = 'scrapeado'; c.PRODUCTOS = n; c.ESCRAPEADO = true; nuevos.push(c)
     process.stdout.write(`✅ ${n} productos (${plat})`)
   }
   console.log('')
 
   if (nuevos.length) await registrar(nuevos)
-  await guardarCola(order, cola)
+  await guardarTabla(order, tabla)
 
   if (nuevos.length) {
     console.log('\n▶ Subiendo a Supabase…'); execSync('node subir.js', { cwd: __dirname, stdio: 'inherit' })
     console.log('\n▶ Actualizando el Sheet…'); execSync('node revisar.js', { cwd: __dirname, stdio: 'inherit' })
   }
-  console.log(`\n✅ Descubrimiento del día: ${nuevos.length} proveedor(es) nuevo(s) scrapeado(s). Pendientes restantes: ${Math.max(0, pendientes.length - batch.length)}.`)
+  console.log(`\n✅ Día: ${nuevos.length} proveedor(es) nuevo(s) scrapeado(s). Pendientes con web restantes: ${Math.max(0, pend.length - batch.length)}.`)
 }
 
 main().catch((e) => { console.error('❌', e.message); process.exit(1) })
