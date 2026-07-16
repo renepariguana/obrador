@@ -5,7 +5,9 @@
   "type": "commonjs",
   "scripts": {
     "subir": "node subir.js",
-    "sync": "node sync-sheet.js"
+    "sync": "node sync-sheet.js",
+    "taxonomia": "node gen-taxonomia.js",
+    "clasificar": "node clasificar.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.110.0",

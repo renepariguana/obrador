@@ -8,6 +8,8 @@ import { useColorScheme } from 'react-native'
 
 import InicioScreen from './src/screens/InicioScreen'
 import OficioScreen from './src/screens/OficioScreen'
+import ProveedoresScreen from './src/screens/ProveedoresScreen'
+import ProveedorCatalogoScreen from './src/screens/ProveedorCatalogoScreen'
 import ProfesionalScreen from './src/screens/ProfesionalScreen'
 import MaterialesScreen from './src/screens/MaterialesScreen'
 import TrabajosScreen from './src/screens/TrabajosScreen'
@@ -17,7 +19,6 @@ import MiPerfilScreen from './src/screens/MiPerfilScreen'
 import LoginScreen from './src/screens/LoginScreen'
 import UbicacionScreen from './src/screens/UbicacionScreen'
 import { Icon, IconName } from './src/components/Icon'
-import { LogoManos } from './src/components/LogoManos'
 import { useTheme } from './src/lib/theme'
 import { ZonaProvider, useZona } from './src/lib/zona'
 import { AuthProvider, useAuth } from './src/lib/auth'
@@ -30,6 +31,8 @@ function InicioStack() {
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="InicioHome" component={InicioScreen} />
       <Stack.Screen name="Oficio" component={OficioScreen} />
+      <Stack.Screen name="Proveedores" component={ProveedoresScreen} />
+      <Stack.Screen name="ProveedorCatalogo" component={ProveedorCatalogoScreen} />
       <Stack.Screen name="Profesional" component={ProfesionalScreen} />
     </Stack.Navigator>
   )
@@ -44,23 +47,26 @@ function TrabajosStack() {
   )
 }
 
-const TABS: { name: string; comp: React.ComponentType; icon: IconName }[] = [
-  { name: 'Inicio', comp: InicioStack, icon: 'home' },
-  { name: 'Cotizar', comp: MaterialesScreen, icon: 'coin' },
-  { name: 'Trabajos', comp: TrabajosStack, icon: 'hand' },
-  { name: 'Pedidos', comp: PedidosScreen, icon: 'chat' },
-  { name: 'Mi perfil', comp: MiPerfilScreen, icon: 'user' },
+const TABS: { name: string; comp: React.ComponentType; icon: IconName; iconOn?: IconName }[] = [
+  { name: 'Inicio', comp: InicioStack, icon: 'home', iconOn: 'homeFill' },
+  { name: 'Materiales', comp: MaterialesScreen, icon: 'container', iconOn: 'containerFill' },
+  { name: 'Trabajos', comp: TrabajosStack, icon: 'obrador', iconOn: 'obrador' },
+  { name: 'Pedidos', comp: PedidosScreen, icon: 'chat', iconOn: 'chatFill' },
+  { name: 'Mi perfil', comp: MiPerfilScreen, icon: 'user', iconOn: 'userFill' },
 ]
 
 function RootTabs() {
   const t = useTheme()
+  const scheme = useColorScheme()
   const insets = useSafeAreaInsets()
   const bottom = Math.max(insets.bottom, 10)
+  // Tab activa: gris oscuro (no negro puro) en modo claro; color claro en modo oscuro.
+  const activeTint = scheme === 'dark' ? t.text : '#3A3F47'
   return (
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: t.text,
+        tabBarActiveTintColor: activeTint,
         tabBarInactiveTintColor: t.text2,
         tabBarStyle: {
           backgroundColor: t.surface,
@@ -79,12 +85,14 @@ function RootTabs() {
           name={tab.name}
           component={tab.comp}
           options={{
-            tabBarIcon: ({ color }) =>
-              tab.name === 'Cotizar' ? (
-                <LogoManos size={30} color={color} />
-              ) : (
-                <Icon name={tab.icon} size={22} color={color} />
-              ),
+            tabBarIcon: ({ color, focused }) => (
+              <Icon
+                name={focused && tab.iconOn ? tab.iconOn : tab.icon}
+                size={tab.name === 'Inicio' ? 26 : tab.name === 'Obrador' ? 25 : 22}
+                color={color}
+                filled={focused}
+              />
+            ),
           }}
         />
       ))}

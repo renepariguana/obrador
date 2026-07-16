@@ -1,19 +1,22 @@
 import React, { useEffect, useState } from 'react'
 import { View, Text, ScrollView, TextInput, Pressable, ActivityIndicator, StyleSheet, Dimensions } from 'react-native'
-
-const CARD_W = (Dimensions.get('window').width - 40) / 2 // 2 cards a lo ancho (padding 32 + gap 8)
+import { useRoute, useNavigation } from '@react-navigation/native'
 import { AppHeader } from '../components/AppHeader'
 import { Icon } from '../components/Icon'
 import { useTheme, spacing, radius, Theme } from '../lib/theme'
-import { useZona } from '../lib/zona'
-import { Material, CatApp, getTaxonomiaApp, getMaterialesApp, precioAr, precioBaseAr, sentenceCase } from '../data/materialesApi'
+import { Material, CatApp, getTaxonomiaProveedor, getMaterialesProveedor, precioAr, precioBaseAr, sentenceCase } from '../data/materialesApi'
 
-const PROVINCIA = 'Tucumán' // por ahora fijo; después se deriva de la ubicación
+const CARD_W = (Dimensions.get('window').width - 40) / 2
+const PROVINCIA = 'Tucumán'
 
-export default function MaterialesScreen() {
+// Catálogo de UN proveedor del mapa (Easy, EMI, Maderplak…): sus productos tal cual, por categoría/subcategoría nativas.
+export default function ProveedorCatalogoScreen() {
   const t = useTheme()
   const s = styles(t)
-  useZona()
+  const route = useRoute<any>()
+  const navigation = useNavigation<any>()
+  const { slug, nombre } = (route.params || {}) as { slug: string; nombre: string }
+
   const [taxo, setTaxo] = useState<CatApp[]>([])
   const [catIdx, setCatIdx] = useState<number | null>(null)
   const [subSel, setSubSel] = useState<string | null>(null)
@@ -23,33 +26,22 @@ export default function MaterialesScreen() {
 
   const catSel = catIdx === null ? null : taxo[catIdx]
 
-  // Agrupa por subcategoría → cada una es una fila deslizable para comparar proveedores/marcas.
+  // Agrupa por subcategoría → cada una es una sección con sus productos.
   const gruposMap = new Map<string, Material[]>()
   items.forEach((m) => {
     const k = m.subcatApp || '—'
     if (!gruposMap.has(k)) gruposMap.set(k, [])
     gruposMap.get(k)!.push(m)
   })
-  const grupos = [...gruposMap.entries()].map(([sub, ms]) => {
-    // Dedup: mismo proveedor·marca·presentación → dejar el de MAYOR precio.
-    const dedup = new Map<string, Material>()
-    ms.forEach((m) => {
-      const k = `${m.proveedor}|${m.marca || ''}|${m.cantidad}|${m.unidadBase}`
-      const prev = dedup.get(k)
-      if (!prev || m.precio > prev.precio) dedup.set(k, m)
-    })
-    return { sub, items: [...dedup.values()].sort((a, b) => a.precio - b.precio) }
-  })
+  const grupos = [...gruposMap.entries()].map(([sub, ms]) => ({ sub, items: ms.slice().sort((a, b) => a.precio - b.precio) }))
 
-  // Taxonomía = lo que clasificaste en el Sheet (cat_app/subcat_app en Supabase)
   useEffect(() => {
-    getTaxonomiaApp(PROVINCIA).then((tx) => {
+    getTaxonomiaProveedor(PROVINCIA, slug).then((tx) => {
       setTaxo(tx)
-      if (tx.length && catIdx === null) setCatIdx(0)
+      if (tx.length) setCatIdx(0)
     })
-  }, [])
+  }, [slug])
 
-  // Productos de la categoría/subcategoría elegida
   useEffect(() => {
     if (!catSel) {
       setItems([])
@@ -57,7 +49,7 @@ export default function MaterialesScreen() {
     }
     setCargando(true)
     const id = setTimeout(() => {
-      getMaterialesApp(PROVINCIA, catSel.nombre, subSel, busqueda).then((r) => {
+      getMaterialesProveedor(PROVINCIA, slug, catSel.nombre, subSel, busqueda).then((r) => {
         setItems(r)
         setCargando(false)
       })
@@ -67,13 +59,24 @@ export default function MaterialesScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: t.bg }}>
-      <AppHeader title="Materiales" right={<Icon name="cart" size={23} color={t.onPrimary} />} />
+      <AppHeader
+        title={nombre || 'Catálogo'}
+        left={
+          <Pressable onPress={() => navigation.goBack()} style={s.headerLeft} hitSlop={10}>
+            <Icon name="back" size={22} color={t.onPrimary} />
+            <Text style={s.headerTitle} numberOfLines={1}>
+              {nombre || 'Catálogo'}
+            </Text>
+          </Pressable>
+        }
+        right={<Icon name="cart" size={23} color={t.onPrimary} />}
+      />
 
       <View style={s.search}>
         <Icon name="search" size={20} color={t.text3} />
         <TextInput
           style={s.searchInput}
-          placeholder="Buscar material…"
+          placeholder="Buscar en este proveedor…"
           placeholderTextColor={t.text3}
           value={busqueda}
           onChangeText={setBusqueda}
@@ -82,13 +85,10 @@ export default function MaterialesScreen() {
 
       {taxo.length === 0 ? (
         <View style={s.center}>
-          <Text style={s.vacio}>
-            Todavía no hay materiales clasificados.{'\n'}Completá categoría y subcategoría en la pestaña Materiales del Sheet.
-          </Text>
+          <Text style={s.vacio}>Este proveedor todavía no tiene productos cargados.</Text>
         </View>
       ) : (
         <>
-          {/* Categorías (tu clasificación) */}
           <View>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.chips}>
               {taxo.map((c, i) => (
@@ -108,7 +108,6 @@ export default function MaterialesScreen() {
             </ScrollView>
           </View>
 
-          {/* Subcategorías */}
           {catSel && catSel.subs.length > 0 && (
             <View>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.subchips}>
@@ -132,35 +131,26 @@ export default function MaterialesScreen() {
             </View>
           ) : items.length === 0 ? (
             <View style={s.center}>
-              <Text style={s.vacio}>No hay materiales acá todavía.</Text>
+              <Text style={s.vacio}>No hay productos acá.</Text>
             </View>
           ) : (
             <ScrollView contentContainerStyle={{ padding: spacing.lg, gap: spacing.md, paddingBottom: spacing.xl }}>
               {grupos.map((g) => (
                 <View key={g.sub} style={s.seccion}>
-                  {/* Fila deslizable: mismo ítem (subcategoría), distintos proveedores/marcas */}
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.varRow}>
-                    {g.items.map((m, i) => {
-                      const best = g.items.length > 1 && i === 0
-                      return (
-                        <View key={m.id} style={[s.optBox, best && s.optBest]}>
-                          <Text style={s.nombre} numberOfLines={2}>
-                            {m.nombre}
-                          </Text>
-                          <View style={s.metaRow}>
-                            <View style={s.prov}>
-                              <Text style={s.provTxt}>{m.proveedor}</Text>
-                            </View>
-                            {m.marca ? <Text style={s.cat}>{m.marca}</Text> : null}
-                          </View>
-                          <View style={{ marginTop: 'auto' }}>
-                            <Text style={s.precio}>{precioAr(m.precio)}</Text>
-                            <Text style={s.unidad}>{m.unidadBase !== 'u' ? precioBaseAr(m) : 'por unidad'}</Text>
-                          </View>
+                  <Text style={s.grupoTitulo}>{sentenceCase(g.sub)}</Text>
+                  <View style={s.grid}>
+                    {g.items.map((m) => (
+                      <View key={m.id} style={s.optBox}>
+                        <Text style={s.nombre} numberOfLines={2}>
+                          {m.nombre}
+                        </Text>
+                        <View style={{ marginTop: 'auto' }}>
+                          <Text style={s.precio}>{precioAr(m.precio)}</Text>
+                          <Text style={s.unidad}>{m.unidadBase !== 'u' ? precioBaseAr(m) : 'por unidad'}</Text>
                         </View>
-                      )
-                    })}
-                  </ScrollView>
+                      </View>
+                    ))}
+                  </View>
                 </View>
               ))}
             </ScrollView>
@@ -173,6 +163,8 @@ export default function MaterialesScreen() {
 
 const styles = (t: Theme) =>
   StyleSheet.create({
+    headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 },
+    headerTitle: { color: t.onPrimary, fontSize: 20, fontWeight: '900', letterSpacing: -0.4, flexShrink: 1 },
     search: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -188,54 +180,20 @@ const styles = (t: Theme) =>
     },
     searchInput: { flex: 1, color: t.text, fontSize: 15, padding: 0 },
     chips: { gap: spacing.sm, paddingHorizontal: spacing.lg, paddingVertical: spacing.md },
-    chip: {
-      backgroundColor: t.surface,
-      borderWidth: 1,
-      borderColor: t.border,
-      borderRadius: radius.pill,
-      paddingHorizontal: spacing.md,
-      paddingVertical: 8,
-      maxWidth: 220,
-    },
+    chip: { backgroundColor: t.surface, borderWidth: 1, borderColor: t.border, borderRadius: radius.pill, paddingHorizontal: spacing.md, paddingVertical: 8, maxWidth: 220 },
     chipOn: { backgroundColor: t.primary, borderColor: t.primary },
     chipTxt: { color: t.text2, fontWeight: '700', fontSize: 13 },
     chipTxtOn: { color: t.onPrimary },
     subchips: { gap: 6, paddingHorizontal: spacing.lg, paddingBottom: spacing.sm },
-    subchip: {
-      backgroundColor: t.bg,
-      borderWidth: 1,
-      borderColor: t.border,
-      borderRadius: radius.pill,
-      paddingHorizontal: spacing.md,
-      paddingVertical: 6,
-    },
+    subchip: { backgroundColor: t.bg, borderWidth: 1, borderColor: t.border, borderRadius: radius.pill, paddingHorizontal: spacing.md, paddingVertical: 6 },
     subchipOn: { backgroundColor: t.text, borderColor: t.text },
     subchipTxt: { color: t.text2, fontWeight: '700', fontSize: 12 },
     subchipTxtOn: { color: t.surface },
     center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: spacing.xl },
     vacio: { color: t.text2, fontSize: 14, textAlign: 'center', lineHeight: 20 },
-    card: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: spacing.md,
-      backgroundColor: t.surface,
-      borderRadius: radius.lg,
-      borderWidth: 1,
-      borderColor: t.border,
-      padding: spacing.md,
-    },
-    nombre: { color: t.text, fontSize: 14, fontWeight: '700', lineHeight: 19 },
-    metaRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginTop: 6 },
-    prov: { backgroundColor: t.surface2, borderRadius: radius.sm, paddingHorizontal: 7, paddingVertical: 2 },
-    provTxt: { fontSize: 10, fontWeight: '800', color: t.text2 },
-    cat: { color: t.text3, fontSize: 11, flexShrink: 1 },
-    precioBox: { alignItems: 'flex-end', gap: 2 },
-    precio: { color: t.text, fontSize: 19, fontWeight: '900' },
-    unidad: { color: t.text3, fontSize: 11 },
-    // Comparador: subcategoría → fila deslizable
     seccion: { gap: spacing.sm },
     grupoTitulo: { fontSize: 15, fontWeight: '900', color: t.text, marginTop: spacing.sm },
-    varRow: { gap: spacing.sm, paddingTop: 2 },
+    grid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
     optBox: {
       width: CARD_W,
       minHeight: 130,
@@ -246,16 +204,7 @@ const styles = (t: Theme) =>
       borderColor: t.border,
       padding: spacing.md,
     },
-    optBest: { borderColor: t.primary, borderWidth: 2 },
-    optMarca: { fontSize: 14, fontWeight: '800', color: t.text },
-    varTag: {
-      fontSize: 9,
-      fontWeight: '900',
-      color: t.onPrimary,
-      backgroundColor: t.primary,
-      borderRadius: radius.sm,
-      paddingHorizontal: 5,
-      paddingVertical: 1,
-      overflow: 'hidden',
-    },
+    nombre: { color: t.text, fontSize: 14, fontWeight: '700', lineHeight: 19 },
+    precio: { color: t.text, fontSize: 19, fontWeight: '900' },
+    unidad: { color: t.text3, fontSize: 11 },
   })

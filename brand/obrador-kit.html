@@ -1,0 +1,158 @@
+<title>OBRADOR · Kit de marca</title>
+<style>
+  :root{
+    --bg:#EDEBE6; --surface:#FAF9F7; --line:#D8D5CE; --ink:#1A1B1E; --muted:#63666C;
+    --amber:#F5B800; --dark:#14161A;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
+    --geo:"Futura","Avenir Next",system-ui,sans-serif;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{--bg:#101215; --surface:#181B1F; --line:#292D33; --ink:#ECEEF0; --muted:#9AA1A9;}
+  }
+  :root[data-theme="light"]{--bg:#EDEBE6; --surface:#FAF9F7; --line:#D8D5CE; --ink:#1A1B1E; --muted:#63666C;}
+  :root[data-theme="dark"]{--bg:#101215; --surface:#181B1F; --line:#292D33; --ink:#ECEEF0; --muted:#9AA1A9;}
+
+  *{box-sizing:border-box}
+  body{margin:0; background:var(--bg); color:var(--ink); font-family:var(--sans); line-height:1.6}
+  .wrap{max-width:960px; margin:0 auto; padding:clamp(26px,5vw,60px) clamp(18px,4vw,36px)}
+  .eyebrow{font-family:var(--mono); font-size:11.5px; letter-spacing:.22em; text-transform:uppercase; color:var(--amber); margin:0 0 12px}
+  h1{font-family:var(--geo); font-weight:600; font-size:clamp(30px,5vw,46px); margin:0 0 10px; letter-spacing:-.01em}
+  .lede{color:var(--muted); max-width:60ch; margin:0; font-size:16.5px}
+
+  .rule{display:flex; align-items:center; gap:14px; margin:44px 0 18px; color:var(--muted); font-family:var(--mono); font-size:11px; letter-spacing:.16em; text-transform:uppercase}
+  .rule::before,.rule::after{content:""; height:1px; background:var(--line); flex:1}
+  .rule::before{flex:0 0 0}
+
+  .board{display:grid; grid-template-columns:1fr 1fr; gap:16px}
+  @media(max-width:720px){.board{grid-template-columns:1fr}}
+  .cell{border:1px solid var(--line); border-radius:10px; padding:30px; display:flex; align-items:center; justify-content:center; min-height:150px; position:relative}
+  .cell .tag{position:absolute; top:10px; left:12px; font-family:var(--mono); font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted)}
+  .on-light{background:#FAF9F7}
+  .on-dark{background:#14161A}
+  .on-amber{background:var(--amber)}
+  .full{grid-column:1/-1}
+  .lockup{width:100%; max-width:420px; height:auto}
+  .lockup.sm{max-width:230px}
+
+  /* variantes de color del lockup mediante clases dentro del symbol */
+  .v-ink .pin,.v-ink .txt{fill:#1A1B1E}
+  .v-white .pin,.v-white .txt{fill:#fff}
+  .v-amber .pin{fill:var(--amber)} .v-amber .txt{fill:#1A1B1E}
+  .v-amber-dark .pin{fill:var(--amber)} .v-amber-dark .txt{fill:#fff}
+
+  .reco{border:1px solid var(--amber); box-shadow:0 0 0 1px var(--amber)}
+  .badge{position:absolute; top:0; right:0; background:var(--amber); color:#1A1B1E; font-family:var(--mono); font-size:10px; letter-spacing:.12em; text-transform:uppercase; padding:5px 10px; border-bottom-left-radius:10px; font-weight:600}
+
+  .scale{display:flex; align-items:center; gap:34px; flex-wrap:wrap; padding:28px 30px; background:var(--surface); border:1px solid var(--line); border-radius:10px}
+  .scale .u{display:flex; flex-direction:column; align-items:center; gap:8px}
+  .scale .u span{font-family:var(--mono); font-size:10.5px; color:var(--muted)}
+  .scale svg .pin,.scale svg .txt{fill:var(--ink)}
+
+  .swatch{display:flex; gap:16px; flex-wrap:wrap; margin-top:4px}
+  .chipc{border:1px solid var(--line); border-radius:10px; overflow:hidden; width:150px}
+  .chipc .col{height:70px}
+  .chipc .meta{padding:8px 12px; font-family:var(--mono); font-size:11px; color:var(--muted)}
+  .chipc .meta b{color:var(--ink); display:block; font-size:12.5px; letter-spacing:.04em}
+
+  table{width:100%; border-collapse:collapse; margin-top:4px; font-size:14px}
+  th,td{text-align:left; padding:10px 12px; border-bottom:1px solid var(--line)}
+  th{font-family:var(--mono); font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); font-weight:400}
+  td code{font-family:var(--mono); font-size:12.5px; color:var(--amber)}
+  .use{font-family:var(--mono); font-size:11.5px}
+  .ok{color:#2e9e5b} .no{color:#d1533b}
+
+  footer{margin-top:40px; text-align:center; color:var(--muted); font-family:var(--mono); font-size:11px; letter-spacing:.1em; text-transform:uppercase}
+</style>
+
+<!-- Master defs: símbolos reutilizables -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="wm" viewBox="-26 14 1025.8 219.6">
+    <g class="pin" transform="translate(-18.42,30.79) scale(7.3684)" fill-rule="evenodd"><path d="M12 1.5C6.75 1.5 2.5 5.75 2.5 11c0 7 9.5 13.5 9.5 13.5S21.5 18 21.5 11C21.5 5.75 17.25 1.5 12 1.5ZM12 6.2a4.6 4.6 0 1 0 0 9.2 4.6 4.6 0 1 0 0-9.2Z"/></g>
+    <g class="txt" transform="translate(159.60,180.00) scale(0.09352,-0.09352)"><path d="M163 1497H546Q731 1497 845.5 1463.0Q960 1429 1026 1365Q1081 1315 1107.5 1246.5Q1134 1178 1134 1101Q1134 995 1088.5 916.5Q1043 838 963 804Q1089 772 1166.5 680.0Q1244 588 1244 434Q1244 340 1211.0 261.5Q1178 183 1110 126Q1037 64 918.5 32.0Q800 0 614 0H163ZM636 286Q704 286 743.5 288.5Q783 291 817.5 303.0Q852 315 876 341Q914 384 914 456Q914 532 872 577Q848 600 814.5 610.0Q781 620 742.5 622.5Q704 625 636 625H493V286ZM601 890Q683 890 721.0 899.5Q759 909 777 929Q819 971 819 1048Q819 1118 782 1163Q759 1188 714.5 1199.5Q670 1211 579 1211H493V890ZM1497 1497H1948Q2127 1497 2240.0 1461.5Q2353 1426 2420 1357Q2532 1238 2532 1035Q2532 820 2409 705Q2367 665 2313.5 639.0Q2260 613 2186 598L2640 0H2224L1827 567V0H1497ZM1915 817Q1978 817 2019.5 820.5Q2061 824 2100.0 840.0Q2139 856 2164 890Q2202 938 2202 1015Q2202 1095 2164 1141Q2139 1174 2100.5 1189.0Q2062 1204 2020.5 1207.5Q1979 1211 1915 1211H1827V817ZM3290 1497H3570L4178 0H3823L3711 302H3149L3037 0H2683ZM3610 573 3429 1061 3249 573ZM4377 1497H4778Q4983 1497 5120.5 1454.0Q5258 1411 5355 1326Q5469 1224 5528.5 1075.5Q5588 927 5588 749Q5588 593 5543.0 459.5Q5498 326 5410 227Q5311 116 5159.0 58.0Q5007 0 4778 0H4377ZM4780 299Q4927 299 5014.0 333.0Q5101 367 5154 434Q5203 494 5227.0 574.0Q5251 654 5251 749Q5251 854 5222.0 941.0Q5193 1028 5134 1088Q5079 1143 4998.0 1170.5Q4917 1198 4780 1198H4703V299ZM5752 753Q5752 987 5847.5 1160.0Q5943 1333 6117.5 1426.0Q6292 1519 6522 1519Q6755 1519 6928.5 1425.0Q7102 1331 7196.5 1157.0Q7291 983 7291 751Q7291 517 7195.0 342.0Q7099 167 6924.5 72.5Q6750 -22 6520 -22Q6288 -22 6114.0 74.0Q5940 170 5846.0 345.5Q5752 521 5752 753ZM6520 291Q6644 291 6744.5 346.5Q6845 402 6903.0 506.5Q6961 611 6961 753Q6961 892 6903.0 995.0Q6845 1098 6744.5 1152.5Q6644 1207 6520 1207Q6398 1207 6298.0 1153.0Q6198 1099 6140.0 996.0Q6082 893 6082 753Q6082 612 6140.0 507.0Q6198 402 6298.0 346.5Q6398 291 6520 291ZM7556 1497H8007Q8186 1497 8299.0 1461.5Q8412 1426 8479 1357Q8591 1238 8591 1035Q8591 820 8468 705Q8426 665 8372.5 639.0Q8319 613 8245 598L8699 0H8283L7886 567V0H7556ZM7974 817Q8037 817 8078.5 820.5Q8120 824 8159.0 840.0Q8198 856 8223 890Q8261 938 8261 1015Q8261 1095 8223 1141Q8198 1174 8159.5 1189.0Q8121 1204 8079.5 1207.5Q8038 1211 7974 1211H7886V817Z"/></g>
+  </symbol>
+  <symbol id="iso" viewBox="0 0 24 25"><path class="pin" fill-rule="evenodd" d="M12 1.5C6.75 1.5 2.5 5.75 2.5 11c0 7 9.5 13.5 9.5 13.5S21.5 18 21.5 11C21.5 5.75 17.25 1.5 12 1.5ZM12 6.2a4.6 4.6 0 1 0 0 9.2 4.6 4.6 0 1 0 0-9.2Z"/></symbol>
+</svg>
+
+<div class="wrap">
+  <p class="eyebrow">OBRADOR · Kit de marca · v1</p>
+  <h1>Logo definitivo — texto en curvas</h1>
+  <p class="lede">El wordmark en Glacial Indifference Bold convertido a trazos (no depende de la fuente) + la primera <b>O</b> como pin. Abajo, todas las versiones y sus usos. La de blanco y negro es la que va a INPI.</p>
+
+  <div class="rule">Para el registro INPI</div>
+  <div class="cell full on-light reco">
+    <span class="badge">Se presenta esta</span>
+    <span class="tag">obrador-registro-bn.svg — mixta B/N</span>
+    <svg class="lockup v-ink" role="img" aria-label="OBRADOR blanco y negro"><use href="#wm"/></svg>
+  </div>
+
+  <div class="rule">Versiones comerciales</div>
+  <div class="board">
+    <div class="cell on-light">
+      <span class="tag">principal · ámbar</span>
+      <svg class="lockup v-amber" role="img" aria-label="OBRADOR ámbar sobre claro"><use href="#wm"/></svg>
+    </div>
+    <div class="cell on-dark">
+      <span class="tag">ámbar sobre oscuro</span>
+      <svg class="lockup v-amber-dark" role="img" aria-label="OBRADOR ámbar sobre oscuro"><use href="#wm"/></svg>
+    </div>
+    <div class="cell on-dark">
+      <span class="tag">negativo · blanco</span>
+      <svg class="lockup v-white" role="img" aria-label="OBRADOR blanco"><use href="#wm"/></svg>
+    </div>
+    <div class="cell on-amber">
+      <span class="tag" style="color:#00000099">sobre ámbar</span>
+      <svg class="lockup v-ink" role="img" aria-label="OBRADOR sobre ámbar"><use href="#wm"/></svg>
+    </div>
+  </div>
+
+  <div class="rule">Isotipo · app · favicon</div>
+  <div class="board">
+    <div class="cell on-amber">
+      <span class="tag" style="color:#00000099">app icon</span>
+      <svg width="150" height="150" viewBox="0 0 512 512" role="img" aria-label="App icon ámbar"><rect width="512" height="512" rx="112" fill="#F5B800"/><g transform="translate(112.6,127.6) scale(11.947)" fill="#000" fill-rule="evenodd"><path d="M12 1.5C6.75 1.5 2.5 5.75 2.5 11c0 7 9.5 13.5 9.5 13.5S21.5 18 21.5 11C21.5 5.75 17.25 1.5 12 1.5ZM12 6.2a4.6 4.6 0 1 0 0 9.2 4.6 4.6 0 1 0 0-9.2Z"/></g></svg>
+    </div>
+    <div class="cell on-dark">
+      <span class="tag">app icon oscuro</span>
+      <svg width="150" height="150" viewBox="0 0 512 512" role="img" aria-label="App icon oscuro"><rect width="512" height="512" rx="112" fill="#14161A"/><g transform="translate(112.6,127.6) scale(11.947)" fill="#F5B800" fill-rule="evenodd"><path d="M12 1.5C6.75 1.5 2.5 5.75 2.5 11c0 7 9.5 13.5 9.5 13.5S21.5 18 21.5 11C21.5 5.75 17.25 1.5 12 1.5ZM12 6.2a4.6 4.6 0 1 0 0 9.2 4.6 4.6 0 1 0 0-9.2Z"/></g></svg>
+    </div>
+  </div>
+
+  <div class="rule">Prueba de escala — marca de registro</div>
+  <div class="scale">
+    <div class="u"><svg width="220" height="48" viewBox="-26 14 1025.8 219.6"><use href="#wm"/></svg><span>220 px</span></div>
+    <div class="u"><svg width="130" height="28" viewBox="-26 14 1025.8 219.6"><use href="#wm"/></svg><span>130 px</span></div>
+    <div class="u"><svg width="40" height="50" viewBox="0 0 24 25"><use href="#iso"/></svg><span>favicon</span></div>
+    <div class="u"><svg width="22" height="28" viewBox="0 0 24 25"><use href="#iso"/></svg><span>16 px</span></div>
+  </div>
+
+  <div class="rule">Color · tipografía</div>
+  <div class="swatch">
+    <div class="chipc"><div class="col" style="background:#F5B800"></div><div class="meta"><b>OBRADOR Amber</b>#F5B800 · rgb 245 184 0</div></div>
+    <div class="chipc"><div class="col" style="background:#1A1B1E"></div><div class="meta"><b>Obra Negro</b>#1A1B1E</div></div>
+    <div class="chipc"><div class="col" style="background:#FAF9F7; border-bottom:1px solid var(--line)"></div><div class="meta"><b>Papel</b>#FAF9F7</div></div>
+  </div>
+  <p class="lede" style="margin-top:16px; font-size:14.5px">Tipografía del wordmark: <b>Glacial Indifference Bold</b> (SIL OFL · ya vectorizada en el archivo, así que no necesitás la licencia para reproducir el logo). Para textos de marca, cualquier geométrica: Glacial Indifference / Poppins.</p>
+
+  <div class="rule">Archivos del kit</div>
+  <table>
+    <tr><th>Archivo</th><th>Uso</th></tr>
+    <tr><td><code>obrador-registro-bn.svg</code></td><td class="use"><span class="ok">●</span> Presentación INPI (mixta B/N)</td></tr>
+    <tr><td><code>obrador-principal-ambar.svg</code></td><td class="use">Web / redes sobre fondo claro</td></tr>
+    <tr><td><code>obrador-ambar-sobre-oscuro.svg</code></td><td class="use">Sobre fondos oscuros</td></tr>
+    <tr><td><code>obrador-negativo-blanco.svg</code></td><td class="use">Monocromo blanco</td></tr>
+    <tr><td><code>obrador-isotipo-negro / ambar.svg</code></td><td class="use">Favicon, sello, marca de agua</td></tr>
+    <tr><td><code>obrador-appicon-ambar / negro.svg</code></td><td class="use">Ícono de app (512×512)</td></tr>
+  </table>
+
+  <div class="rule">Reglas rápidas</div>
+  <p class="lede" style="font-size:14.5px">
+    <span class="ok">✓</span> Ámbar plano, siempre. &nbsp;
+    <span class="ok">✓</span> Respetá el aire alrededor (mínimo = alto del pin). &nbsp;
+    <span class="no">✗</span> No lo pongas en degradé. &nbsp;
+    <span class="no">✗</span> No cambies la tipografía ni deformes el pin. &nbsp;
+    <span class="no">✗</span> No uses ámbar sobre ámbar.
+  </p>
+
+  <footer>OBRADOR · kit v1 · 2026 — archivos SVG en tu carpeta scratchpad</footer>
+</div>

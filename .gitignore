@@ -6,3 +6,9 @@ dist/
 .expo/
 supabase/.temp/
 next-env.d.ts
+
+# macOS / logs de los agentes / scratch de superpowers
+.DS_Store
+scraper/log.txt
+scraper/descubrir-log.txt
+.superpowers/

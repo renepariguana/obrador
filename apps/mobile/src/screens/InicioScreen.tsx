@@ -191,14 +191,26 @@ export default function InicioScreen() {
 
         {/* ===== MAPA (pedidos cerca tuyo) ===== */}
         <View style={s.sectionRow}>
-          <Text style={s.section}>Pedidos cerca tuyo</Text>
-          <Pressable>
+          <Text style={s.section}>Trabajos cerca tuyo</Text>
+          <Pressable onPress={() => navigation.navigate('Trabajos')}>
             <Text style={s.verMas}>Ver mapa</Text>
           </Pressable>
         </View>
         <View style={s.mapCard}>
           <MapaPedidos height={210} pedidos={pedidosDeZona(zona)} />
         </View>
+
+        {/* ===== BANNER PROVEEDORES ===== */}
+        <Pressable style={s.provBanner} onPress={() => navigation.navigate('Proveedores')}>
+          <View style={s.provIcon}>
+            <Icon name="store" size={24} color={t.onPrimary} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={s.provTitle}>Proveedores en el mapa</Text>
+            <Text style={s.provSub}>Corralones, ferreterías y materiales cerca tuyo</Text>
+          </View>
+          <Icon name="chevron" size={22} color={t.text3} />
+        </Pressable>
 
         {/* ===== OFICIOS ===== */}
         <Text style={s.section}>Oficios</Text>
@@ -298,6 +310,28 @@ const styles = (t: Theme) =>
       borderColor: t.border,
     },
     strip: { paddingHorizontal: spacing.lg, gap: spacing.md },
+    provBanner: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.md,
+      marginHorizontal: spacing.lg,
+      marginTop: spacing.lg,
+      padding: spacing.md,
+      backgroundColor: t.surface,
+      borderRadius: radius.lg,
+      borderWidth: 1,
+      borderColor: t.border,
+    },
+    provIcon: {
+      width: 46,
+      height: 46,
+      borderRadius: radius.md,
+      backgroundColor: t.primary,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    provTitle: { color: t.text, fontSize: 15, fontWeight: '800' },
+    provSub: { color: t.text2, fontSize: 12, fontWeight: '600', marginTop: 2 },
     jobCard: {
       width: 232,
       backgroundColor: t.surface,

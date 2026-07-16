@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.manos.agente</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/opt/homebrew/bin/node</string>
+        <string>/Users/renepariguana/Desktop/Proyectos/Obrador/scraper/agente.js</string>
+    </array>
+
+    <key>WorkingDirectory</key>
+    <string>/Users/renepariguana/Desktop/Proyectos/Obrador/scraper</string>
+
+    <!-- Día 1 de cada mes a las 9am (1h después del Presupuestador para no solaparse) -->
+    <key>StartCalendarInterval</key>
+    <dict>
+        <key>Day</key>
+        <integer>1</integer>
+        <key>Hour</key>
+        <integer>9</integer>
+        <key>Minute</key>
+        <integer>0</integer>
+    </dict>
+
+    <key>RunAtLoad</key>
+    <false/>
+
+    <key>StandardOutPath</key>
+    <string>/Users/renepariguana/Desktop/Proyectos/Obrador/scraper/log.txt</string>
+
+    <key>StandardErrorPath</key>
+    <string>/Users/renepariguana/Desktop/Proyectos/Obrador/scraper/log.txt</string>
+</dict>
+</plist>
