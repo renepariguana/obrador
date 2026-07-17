@@ -2,7 +2,7 @@
 // una fila por proveedor del directorio (Sheet "PROVEEDORES" → pestaña Guia), con web/plataforma/estado/
 // productos y un check ☑ (scrapeado). Cada corrida: sincroniza el directorio, marca los ya scrapeados
 // (desde Supabase), procesa POR_DIA pendientes con web (detecta VTEX/Algolia/WooCommerce y scrapea),
-// registra y sube. Los scrapers viven en Presupuestador/scrapers. Uso: node descubrir.js (o launchd diario).
+// registra y sube. Los scrapers viven acá mismo (Obrador autocontenido). Uso: node descubrir.js (launchd diario).
 require('dotenv').config()
 const fs = require('fs')
 const path = require('path')
@@ -12,7 +12,7 @@ const { createClient } = require('@supabase/supabase-js')
 const { getValues, updateValues, addSheetIfMissing, accessToken, SHEET_ID } = require('./gsheets')
 
 const DIR_SID = '1-Khv4JD9ilcuzJZj_J6sMLaw7aZ1m2u9LZUsZrLnsH0' // Sheet "PROVEEDORES" (directorio del mapa)
-const PRES = path.resolve(__dirname, '../../Presupuestador/scrapers')
+const PRES = __dirname // scrapers locales (Obrador autocontenido)
 const TAB = 'Proveedores'
 const POR_DIA = 10
 const COLS = ['PROVEEDOR', 'RUBRO', 'PROVINCIA', 'WEB', 'SLUG', 'TIPO', 'ESTADO', 'PRODUCTOS', 'ULTIMO_SCRAPE', 'ESCRAPEADO']

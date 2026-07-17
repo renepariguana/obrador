@@ -12,3 +12,8 @@ next-env.d.ts
 scraper/log.txt
 scraper/descubrir-log.txt
 .superpowers/
+
+# Scrapers movidos desde Presupuestador — secretos y datos
+scraper/token.json
+scraper/client_secret.json
+scraper/*-rows.json

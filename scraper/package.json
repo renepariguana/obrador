@@ -12,6 +12,7 @@
   "dependencies": {
     "@supabase/supabase-js": "^2.110.0",
     "dotenv": "^16.4.5",
-    "googleapis": "^172.0.0"
+    "googleapis": "^172.0.0",
+    "puppeteer": "^25.3.0"
   }
 }

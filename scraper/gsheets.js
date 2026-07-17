@@ -1,6 +1,6 @@
 // Helper mínimo para Google Sheets con fetch nativo (evita googleapis, que cuelga en node v26).
 const fs = require('fs'); const path = require('path')
-const PRES = '/Users/renepariguana/Desktop/Proyectos/Presupuestador/scrapers'
+const PRES = __dirname // token.json y client_secret.json viven acá mismo (Obrador es autocontenido)
 const SHEET_ID = '1GMIAwUPl3Rq7OMjg3mBNPhuKjQ4HzIp3xOsnVMCBg0M'
 
 async function accessToken() {

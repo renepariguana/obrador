@@ -1,6 +1,6 @@
 // Sincroniza Supabase (tabla materiales) con lo scrapeado de cada proveedor ACTIVO de la pestaña Proveedores.
 // Diff mensual por (proveedor + CODIGO/url): ALTA (nuevo), UPDATE (precio), REACTIVA (volvió), BAJA (ya no está
-// → activo=false, baja_at). Lee los archivos {slug}-rows.json de Presupuestador/scrapers.
+// → activo=false, baja_at). Lee los archivos {slug}-rows.json locales (scraper/).
 // Uso: node subir.js
 require('dotenv').config()
 const fs = require('fs')
@@ -16,7 +16,7 @@ if (!URL || !KEY) {
 }
 const sb = createClient(URL, KEY, { auth: { persistSession: false } })
 
-const PRES = path.resolve(__dirname, '../../Presupuestador/scrapers')
+const PRES = __dirname // scrapers locales (Obrador autocontenido)
 const PROVINCIA = 'Tucumán'
 
 // Precio: 'easy'/vtex = número crudo (punto decimal). 'emi'/puppeteer = formato AR (punto miles, coma decimal).

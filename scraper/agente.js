@@ -8,7 +8,7 @@ const { execSync } = require('child_process')
 const path = require('path')
 const { getValues } = require('./gsheets')
 
-const PRES = path.resolve(__dirname, '../../Presupuestador/scrapers')
+const PRES = __dirname // scrapers locales (Obrador autocontenido)
 // Scrapers a medida por slug (para sitios que no son VTEX o necesitan lógica propia).
 const MODULOS = { easy: 'node scrape-easy.js', emi: 'node scrape-emi.js', maderplak: 'node scrape-maderplak.js' }
 
