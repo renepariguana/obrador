@@ -10,7 +10,7 @@ const UA = 'Mozilla/5.0 (Macintosh) AppleWebKit/537.36 Chrome/120 Safari/537.36'
 
 function getJson(url, ms = 15000) {
   return new Promise((res, rej) => {
-    const r = https.get(url, { headers: { 'User-Agent': UA, Accept: 'application/json' }, timeout: ms }, (resp) => {
+    const r = https.get(url, { headers: { 'User-Agent': UA, Accept: 'application/json' }, timeout: ms, rejectUnauthorized: false }, (resp) => {
       let d = ''
       resp.on('data', (c) => (d += c))
       resp.on('end', () => { try { res({ body: JSON.parse(d), headers: resp.headers, status: resp.statusCode }) } catch (e) { rej(new Error('json ' + resp.statusCode)) } })

@@ -29,7 +29,8 @@ const LABELS = {}
 const labelDe = (c) => LABELS[c] || c
 
 const colLetra = (i) => String.fromCharCode(65 + i)
-const tabDe = (proveedor) => (proveedor || 'OTROS').split(/\s+/)[0].toUpperCase() // "Easy"->EASY, "EMI SRL"->EMI
+// La pestaña se llama igual que el proveedor (nombre completo), saneando caracteres inválidos para Sheets.
+const tabDe = (proveedor) => ((proveedor || 'OTROS').trim().replace(/[:\\/?*[\]]/g, ' ').replace(/\s+/g, ' ').slice(0, 95)) || 'OTROS'
 
 // Trae los materiales scrapeados desde Supabase (con cat/sub nativas y sku si la columna existe).
 async function traerMateriales() {

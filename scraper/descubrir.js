@@ -14,7 +14,7 @@ const { getValues, updateValues, addSheetIfMissing, accessToken, SHEET_ID } = re
 const DIR_SID = '1-Khv4JD9ilcuzJZj_J6sMLaw7aZ1m2u9LZUsZrLnsH0' // Sheet "PROVEEDORES" (directorio del mapa)
 const PRES = __dirname // scrapers locales (Obrador autocontenido)
 const TAB = 'Proveedores'
-const POR_DIA = 10
+const POR_DIA = Number(process.env.POR_DIA) || 60 // pendientes a procesar por corrida (barre casi todos los con-web)
 const COLS = ['PROVEEDOR', 'RUBRO', 'PROVINCIA', 'WEB', 'SLUG', 'TIPO', 'ESTADO', 'PRODUCTOS', 'ULTIMO_SCRAPE', 'ESCRAPEADO']
 const IESC = COLS.indexOf('ESCRAPEADO')
 const PRESERVAR = ['RUBRO'] // lo carga el usuario, no se pisa
@@ -31,14 +31,18 @@ function slugDe(nombre) {
   return k.replace(/&/g, ' y ').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'prov'
 }
 
-// GET con timeout, sigue redirects, devuelve body parcial si el sitio es lento.
-function get(url, ms = 12000, redirects = 4) {
+// GET con timeout, sigue redirects, ignora certs SSL rotos, y si el dominio no resuelve prueba con/sin www.
+function get(url, ms = 12000, redirects = 4, wwwTried = false) {
   return new Promise((res) => {
     let done = false, body = ''
     const d1 = (v) => { if (!done) { done = true; res(v) } }
+    const toggleWww = () => {
+      const alt = /^https?:\/\/www\./i.test(url) ? url.replace(/^(https?:\/\/)www\./i, '$1') : url.replace(/^(https?:\/\/)/i, '$1www.')
+      return alt !== url ? get(alt, ms, redirects, true) : { err: 'dns' }
+    }
     let req
     try {
-      req = https.get(url, { headers: { 'User-Agent': 'Mozilla/5.0 (Macintosh) AppleWebKit/537.36 Chrome/120 Safari/537.36', Accept: 'text/html,application/json' }, timeout: ms }, (resp) => {
+      req = https.get(url, { headers: { 'User-Agent': 'Mozilla/5.0 (Macintosh) AppleWebKit/537.36 Chrome/120 Safari/537.36', Accept: 'text/html,application/json' }, timeout: ms, rejectUnauthorized: false }, (resp) => {
         if ([301, 302, 303, 307, 308].includes(resp.statusCode) && resp.headers.location && redirects > 0) {
           resp.destroy()
           const loc = /^https?:\/\//.test(resp.headers.location) ? resp.headers.location : new URL(resp.headers.location, url).href
@@ -48,7 +52,10 @@ function get(url, ms = 12000, redirects = 4) {
         resp.on('end', () => d1({ s: resp.statusCode, b: body }))
       })
       req.on('timeout', () => { req.destroy(); d1(body ? { s: 0, b: body } : { err: 'timeout' }) })
-      req.on('error', (e) => d1(body ? { s: 0, b: body } : { err: e.message }))
+      req.on('error', (e) => {
+        if (!wwwTried && !body && /ENOTFOUND|EAI_AGAIN/.test(e.message)) return d1(toggleWww())
+        d1(body ? { s: 0, b: body } : { err: e.message })
+      })
       setTimeout(() => { try { req && req.destroy() } catch (e) {} ; d1(body ? { s: 0, b: body } : { err: 'hard' }) }, ms + 2000)
     } catch (e) { d1({ err: e.message }) }
   })
@@ -191,6 +198,9 @@ async function main() {
 
   // batch del día: con web, pendiente/caido, no scrapeado
   const pend = order.map((n) => tabla.get(n)).filter((c) => tieneWeb(c.WEB) && ['pendiente', 'caido', 'caído'].includes((c.ESTADO || '').toLowerCase()) && !c.ESCRAPEADO)
+  // PRIORIDAD: Tucumán primero (la app es de Tucumán); dentro, las nuevas (pendiente) antes que los caídos.
+  const pri = (c) => (norm(c.PROVINCIA) === 'tucuman' ? 0 : 2) + (/^pendiente$/i.test(c.ESTADO) ? 0 : 1)
+  pend.sort((a, b) => pri(a) - pri(b))
   const batch = pend.slice(0, POR_DIA)
   console.log(`Tabla: ${order.length} proveedores | pendientes con web: ${pend.length} | proceso hoy: ${batch.length}`)
   const hoy = new Date().toISOString().slice(0, 10)
