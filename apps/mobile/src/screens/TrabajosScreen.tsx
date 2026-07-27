@@ -150,7 +150,7 @@ export default function TrabajosScreen() {
                     style={[s.btnPrimary, p.yaPostulado && s.btnDone]}
                     onPress={() => navigation.navigate('DetallePedido', { pedido: p })}
                   >
-                    <Icon name="check" size={18} color={p.yaPostulado ? t.text2 : t.onPrimary} />
+                    <Icon name={p.yaPostulado ? 'check' : 'hand'} size={18} color={p.yaPostulado ? t.text2 : t.onPrimary} />
                     <Text style={[s.btnPrimaryTxt, p.yaPostulado && s.btnDoneTxt]}>
                       {p.yaPostulado ? 'Ya postulado' : 'Postularme'}
                     </Text>
