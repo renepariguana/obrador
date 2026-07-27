@@ -82,7 +82,7 @@ export default function ProfesionalScreen({ route, navigation }: any) {
             </View>
             {pro.verificado && (
               <View style={s.verif}>
-                <Icon name="check" size={14} color={t.onPrimary} />
+                <Icon name="check" size={14} color={t.surface} />
               </View>
             )}
           </View>
@@ -92,7 +92,7 @@ export default function ProfesionalScreen({ route, navigation }: any) {
           </Text>
           {pro.verificado && (
             <View style={s.verifChip}>
-              <Icon name="badge" size={13} color={t.onPrimary} />
+              <Icon name="badge" size={13} color={t.surface} />
               <Text style={s.verifChipTxt}>Identidad verificada</Text>
             </View>
           )}
@@ -116,7 +116,7 @@ export default function ProfesionalScreen({ route, navigation }: any) {
           </View>
 
           <Pressable style={s.cta} onPress={contactar}>
-            <Icon name="whatsapp" size={18} color={t.onPrimary} />
+            <Icon name="whatsapp" size={18} color={t.surface} />
             <Text style={s.ctaTxt}>Contactar</Text>
           </Pressable>
         </View>
@@ -138,7 +138,7 @@ export default function ProfesionalScreen({ route, navigation }: any) {
                 <View style={s.reviewHead}>
                   <Text style={s.reviewAutor}>{r.autorNombre}</Text>
                   <View style={s.reviewStars}>
-                    <Icon name="star" size={13} color={t.rating} />
+                    <Icon name="star" size={13} color={t.text} />
                     <Text style={s.reviewRating}>{r.estrellas}</Text>
                   </View>
                 </View>
@@ -181,7 +181,7 @@ const styles = (t: Theme) =>
       width: 28,
       height: 28,
       borderRadius: 14,
-      backgroundColor: t.primary,
+      backgroundColor: t.text,
       borderWidth: 3,
       borderColor: t.bg,
       alignItems: 'center',
@@ -193,13 +193,13 @@ const styles = (t: Theme) =>
       flexDirection: 'row',
       alignItems: 'center',
       gap: 5,
-      backgroundColor: t.primary,
+      backgroundColor: t.text,
       borderRadius: radius.pill,
       paddingHorizontal: 10,
       paddingVertical: 5,
       marginTop: spacing.md,
     },
-    verifChipTxt: { color: t.onPrimary, fontSize: 12, fontWeight: '800' },
+    verifChipTxt: { color: t.surface, fontSize: 12, fontWeight: '800' },
     stats: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -223,10 +223,10 @@ const styles = (t: Theme) =>
       alignSelf: 'stretch',
       height: 50,
       borderRadius: radius.md,
-      backgroundColor: t.primary,
+      backgroundColor: t.text,
       marginTop: spacing.md,
     },
-    ctaTxt: { color: t.onPrimary, fontSize: 16, fontWeight: '800' },
+    ctaTxt: { color: t.surface, fontSize: 16, fontWeight: '800' },
     section: {
       color: t.text,
       fontSize: 17,

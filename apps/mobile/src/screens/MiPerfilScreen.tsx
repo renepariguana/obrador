@@ -298,7 +298,7 @@ const styles = (t: Theme) =>
     gLabel: { flex: 1, color: t.text, fontSize: 16, fontWeight: '600' },
     gGap: { height: spacing.md },
     completarNombre: { marginHorizontal: spacing.lg, marginTop: -spacing.sm, marginBottom: spacing.sm },
-    completarNombreTxt: { color: t.primary, fontSize: 14, fontWeight: '800' },
+    completarNombreTxt: { color: t.text, fontSize: 14, fontWeight: '800' },
     modalBg: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
     modalCard: { backgroundColor: t.bg, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: spacing.lg, gap: spacing.sm },
     modalTitle: { color: t.text, fontSize: 20, fontWeight: '900', marginBottom: spacing.xs },
