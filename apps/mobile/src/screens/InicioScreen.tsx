@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react'
-import { View, Text, ScrollView, TextInput, Pressable, StyleSheet } from 'react-native'
+import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useNavigation, useFocusEffect } from '@react-navigation/native'
 import { MapaPedidos } from '../components/MapaPedidos'
@@ -164,15 +164,11 @@ export default function InicioScreen() {
             </Pressable>
           </View>
 
-          {/* Buscador */}
-          <View style={s.search}>
-            <Icon name="search" size={20} color={t.text3} />
-            <TextInput
-              style={s.searchInput}
-              placeholder="¿Qué necesitás hacer hoy?"
-              placeholderTextColor={t.text3}
-            />
-          </View>
+          {/* "Buscador" → publicar un pedido (igual que Trabajos) */}
+          <Pressable style={s.search} onPress={() => navigation.navigate('PublicarPedido')}>
+            <Icon name="plus" size={20} color={t.text} />
+            <Text style={s.searchPlaceholder}>¿Qué necesitás hacer hoy?</Text>
+          </Pressable>
 
           {/* Banner de anuncios / descuentos / trabajos destacados */}
           <View style={s.promo}>
@@ -285,7 +281,7 @@ const styles = (t: Theme) =>
       height: 48,
       marginTop: spacing.md,
     },
-    searchInput: { flex: 1, color: '#16181D', fontSize: 15, padding: 0 },
+    searchPlaceholder: { flex: 1, color: t.text3, fontSize: 15, fontWeight: '600' },
     promo: { flexDirection: 'row', alignItems: 'center', marginTop: spacing.xl, minHeight: 92 },
     promoTitle: { color: t.onPrimary, fontSize: 22, fontWeight: '900', letterSpacing: -0.4 },
     promoSub: { color: t.onPrimary, opacity: 0.75, fontSize: 13, marginTop: 4, fontWeight: '600' },

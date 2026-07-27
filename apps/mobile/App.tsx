@@ -38,6 +38,9 @@ function InicioStack() {
       <Stack.Screen name="Proveedores" component={ProveedoresScreen} />
       <Stack.Screen name="ProveedorCatalogo" component={ProveedorCatalogoScreen} />
       <Stack.Screen name="Profesional" component={ProfesionalScreen} />
+      <Stack.Screen name="PublicarPedido" component={PublicarPedidoScreen} />
+      <Stack.Screen name="MisPedidos" component={MisPedidosScreen} />
+      <Stack.Screen name="DetallePedido" component={DetallePedidoScreen} />
     </Stack.Navigator>
   )
 }

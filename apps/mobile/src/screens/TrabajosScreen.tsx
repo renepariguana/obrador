@@ -68,7 +68,7 @@ export default function TrabajosScreen() {
         <View style={s.searchRow}>
           <Pressable style={s.search} onPress={() => navigation.navigate('PublicarPedido')}>
             <Icon name="plus" size={20} color={t.text} />
-            <Text style={s.searchPlaceholder}>¿Qué necesitás hacer?</Text>
+            <Text style={s.searchPlaceholder}>¿Qué necesitás hacer hoy?</Text>
           </Pressable>
           <Pressable style={[s.fbtn, hayFiltro && s.fbtnOn]} onPress={() => setShowFiltros(true)}>
             <Icon name="filter" size={20} color={hayFiltro ? t.surface : t.text} />
