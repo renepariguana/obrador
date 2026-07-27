@@ -3,7 +3,7 @@ import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useNavigation, useFocusEffect } from '@react-navigation/native'
 import { MapaPedidos } from '../components/MapaPedidos'
-import { ConfirmarUbicacion } from '../components/ConfirmarUbicacion'
+import { SelectorDireccion } from '../components/SelectorDireccion'
 import { Icon, IconName } from '../components/Icon'
 import { useTheme, spacing, radius, Theme } from '../lib/theme'
 import { cercaDe, Profesional } from '../data/profesionales'
@@ -66,7 +66,7 @@ export default function InicioScreen() {
   const insets = useSafeAreaInsets()
   const s = styles(t)
   const navigation = useNavigation<any>()
-  const { zona, setZona } = useZona()
+  const { zona } = useZona()
   const miUbic = useMiUbicacion()
   const [showUbic, setShowUbic] = useState(false)
   const [pedidos, setPedidos] = useState<PedidoVista[]>([])
@@ -236,13 +236,7 @@ export default function InicioScreen() {
             listos: TRABAJOS, URGENTES, TOP_PROS, renderTrabajos). */}
       </ScrollView>
 
-      <ConfirmarUbicacion
-        visible={showUbic}
-        onConfirm={(z) => {
-          if (z) setZona(z)
-          setShowUbic(false)
-        }}
-      />
+      <SelectorDireccion visible={showUbic} onClose={() => setShowUbic(false)} />
     </View>
   )
 }
