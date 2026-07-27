@@ -19,7 +19,6 @@ export default function MiPerfilScreen() {
   const { cerrarSesion, logueado, irLogin, usuario, borrarCuenta } = useAuth()
   const gate = useGate()
   const navigation = useNavigation<any>()
-  const [verificado] = useState(false)
   const [perfil, setPerfil] = useState<Perfil | null>(null)
   const [editOpen, setEditOpen] = useState(false)
   const [form, setForm] = useState({ nombre: '', telefono: '', whatsapp: '', zona: '' })
@@ -150,23 +149,12 @@ export default function MiPerfilScreen() {
           </Pressable>
         )}
 
-        {/* Banner verificación */}
-        {!verificado && (
-          <View style={s.banner}>
-            <View style={{ flex: 1 }}>
-              <Text style={s.bannerTitle}>Verificá tu identidad</Text>
-              <Text style={s.bannerText}>Reconocimiento facial + DNI. Los perfiles verificados reciben más trabajos.</Text>
-            </View>
-            <Icon name="chevron" size={22} color={t.onPrimary} />
-          </View>
-        )}
-
         {/* Accesos rápidos */}
         <View style={s.tiles}>
           <Tile icon="user" label="Datos personales" onPress={() => setEditOpen(true)} />
           <Tile icon="star" label="Mis reseñas" />
           <Tile icon="badge" label="Verificación" />
-          <Tile icon="phone" label="Ayuda" />
+          <Tile icon="phone" label="Ayuda" onPress={() => Linking.openURL('mailto:renepariguana@gmail.com?subject=Ayuda Obrador')} />
         </View>
 
         {/* Completá tu perfil */}
@@ -335,10 +323,6 @@ const styles = (t: Theme) =>
     greet: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: spacing.lg },
     hola: { color: t.text, fontSize: 22, fontWeight: '900' },
     avatarSmall: { width: 44, height: 44, borderRadius: 22, backgroundColor: t.surface2, alignItems: 'center', justifyContent: 'center' },
-
-    banner: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, backgroundColor: t.primary, borderRadius: radius.lg, padding: spacing.lg, marginHorizontal: spacing.lg, marginTop: spacing.lg },
-    bannerTitle: { color: t.onPrimary, fontSize: 15, fontWeight: '900' },
-    bannerText: { color: t.onPrimary, opacity: 0.82, fontSize: 12, marginTop: 3, lineHeight: 16 },
 
     tiles: { flexDirection: 'row', gap: spacing.sm, paddingHorizontal: spacing.lg, marginTop: spacing.lg },
     tile: { flex: 1, alignItems: 'center', gap: 6 },
