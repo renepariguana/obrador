@@ -20,6 +20,10 @@ export type Material = {
   // De TU clasificación (Sheet Manos):
   subcatApp?: string | null
   marca?: string | null
+  // Extra scrapeado (para el desplegable de detalle):
+  descripcion?: string | null
+  sku?: string | null
+  imagen?: string | null
 }
 
 export function precioAr(n: number): string {
@@ -86,7 +90,24 @@ type Row = {
   unidad: string | null
   url: string | null
   descripcion: string | null
+  sku: string | null
+  imagen: string | null
   proveedores: { nombre: string } | null
+}
+
+// Supabase corta en 1000 filas por request. Para escaneos completos (proveedores, taxonomía)
+// paginamos con .range() hasta traer todo. `build` debe crear una query NUEVA en cada llamada.
+type Rangeable<T> = { range: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: unknown }> }
+async function fetchAllRows<T>(build: () => Rangeable<T>): Promise<T[]> {
+  const PAGE = 1000
+  const out: T[] = []
+  for (let from = 0; ; from += PAGE) {
+    const { data, error } = await build().range(from, from + PAGE - 1)
+    if (error || !data || data.length === 0) break
+    out.push(...data)
+    if (data.length < PAGE) break
+  }
+  return out
 }
 
 // Materiales filtrados por categoría normalizada y/o búsqueda.
@@ -97,7 +118,7 @@ export async function getMateriales(
 ): Promise<Material[]> {
   let q = supabase
     .from('materiales')
-    .select('id,provincia,categoria,subcategoria,nombre,precio,unidad,url,proveedores(nombre)')
+    .select('id,provincia,categoria,subcategoria,nombre,precio,unidad,url,descripcion,sku,imagen,proveedores(nombre)')
     .eq('provincia', provincia)
   if (categoria) q = q.eq('categoria_norm', categoria)
   if (busqueda.trim()) q = q.ilike('nombre', `%${busqueda.trim()}%`)
@@ -210,17 +231,13 @@ export function extraerCantidad(texto: string, unidad: UnidadBase): number | nul
 export type CatApp = { nombre: string; subs: string[] }
 // Taxonomía = categorías/subcategorías NATIVAS de cada página (columnas categoria/subcategoria de Supabase,
 // que el scraper trae de 2 niveles de atrás para adelante). La app agrupa por las categorías reales del sitio.
+type TaxRow = { categoria: string | null; subcategoria: string | null }
 export async function getTaxonomiaApp(provincia: string): Promise<CatApp[]> {
-  const { data, error } = await supabase
-    .from('materiales')
-    .select('categoria,subcategoria')
-    .eq('provincia', provincia)
-    .eq('activo', true)
-    .not('categoria', 'is', null)
-    .limit(5000)
-  if (error || !data) return []
+  const data = await fetchAllRows<TaxRow>(() =>
+    supabase.from('materiales').select('categoria,subcategoria,proveedores!inner(visible_app)').eq('provincia', provincia).eq('activo', true).eq('proveedores.visible_app', true).not('categoria', 'is', null) as unknown as Rangeable<TaxRow>,
+  )
   const map = new Map<string, Set<string>>()
-  ;(data as { categoria: string | null; subcategoria: string | null }[]).forEach((r) => {
+  data.forEach((r) => {
     if (!r.categoria) return
     if (!map.has(r.categoria)) map.set(r.categoria, new Set())
     if (r.subcategoria) map.get(r.categoria)!.add(r.subcategoria)
@@ -239,9 +256,10 @@ export async function getMaterialesApp(
 ): Promise<Material[]> {
   let q = supabase
     .from('materiales')
-    .select('id,provincia,categoria,subcategoria,nombre,precio,unidad,url,proveedores(nombre)')
+    .select('id,provincia,categoria,subcategoria,nombre,precio,unidad,url,descripcion,sku,imagen,proveedores!inner(nombre)')
     .eq('provincia', provincia)
     .eq('activo', true)
+    .eq('proveedores.visible_app', true)
     .eq('categoria', categoria)
   if (subcategoria) q = q.eq('subcategoria', subcategoria)
   if (busqueda.trim()) q = q.ilike('nombre', `%${busqueda.trim()}%`)
@@ -265,9 +283,16 @@ export async function getMaterialesApp(
         precioBase: r.precio / cantidad,
         subcatApp: r.subcategoria,
         marca: null,
+        descripcion: r.descripcion ?? null,
+        sku: r.sku ?? null,
+        imagen: r.imagen ?? null,
       }
     })
-    .sort((a, b) => a.precioBase - b.precioBase)
+    // Comparador: más barato por unidad primero; los SIN precio (0) van al final.
+    .sort((a, b) => {
+      if (a.precio > 0 !== b.precio > 0) return a.precio > 0 ? -1 : 1
+      return a.precioBase - b.precioBase
+    })
 }
 
 // ---- Catálogo de UN proveedor (para la ficha del mapa) ----
@@ -283,6 +308,31 @@ export function slugScrapeado(proveedor: string, provincia: string): string | nu
   return SCRAPEADOS[_n(proveedor)] ?? null
 }
 
+// Proveedores que tienen productos (para el filtro de la tab Materiales).
+// Provincias que tienen productos activos (para el selector de provincia de la tab Materiales).
+export async function getProvincias(): Promise<string[]> {
+  const rows = await fetchAllRows<{ provincia: string | null }>(() =>
+    supabase.from('materiales').select('provincia,proveedores!inner(visible_app)').eq('activo', true).eq('proveedores.visible_app', true) as unknown as Rangeable<{ provincia: string | null }>,
+  )
+  const set = new Set<string>()
+  rows.forEach((r) => r.provincia && set.add(r.provincia))
+  return [...set].sort((a, b) => a.localeCompare(b, 'es'))
+}
+
+export async function getProveedores(provincia: string): Promise<{ nombre: string; slug: string; logo: string | null }[]> {
+  const rows = await fetchAllRows<{ proveedores: { nombre: string; slug: string; logo_url: string | null } | null }>(() =>
+    supabase.from('materiales').select('proveedores!inner(nombre,slug,visible_app,logo_url)').eq('provincia', provincia).eq('activo', true).eq('proveedores.visible_app', true) as unknown as Rangeable<{ proveedores: { nombre: string; slug: string; logo_url: string | null } | null }>,
+  )
+  const map = new Map<string, { nombre: string; logo: string | null }>()
+  rows.forEach((r) => {
+    const p = r.proveedores
+    if (p?.slug) map.set(p.slug, { nombre: p.nombre, logo: p.logo_url })
+  })
+  return [...map.entries()]
+    .map(([slug, v]) => ({ slug, nombre: v.nombre, logo: v.logo }))
+    .sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'))
+}
+
 async function _proveedorId(slug: string): Promise<string | null> {
   const { data } = await supabase.from('proveedores').select('id').eq('slug', slug).single()
   return (data as { id: string } | null)?.id ?? null
@@ -292,17 +342,11 @@ async function _proveedorId(slug: string): Promise<string | null> {
 export async function getTaxonomiaProveedor(provincia: string, slug: string): Promise<CatApp[]> {
   const id = await _proveedorId(slug)
   if (!id) return []
-  const { data, error } = await supabase
-    .from('materiales')
-    .select('categoria,subcategoria')
-    .eq('provincia', provincia)
-    .eq('proveedor_id', id)
-    .eq('activo', true)
-    .not('categoria', 'is', null)
-    .limit(5000)
-  if (error || !data) return []
+  const data = await fetchAllRows<TaxRow>(() =>
+    supabase.from('materiales').select('categoria,subcategoria').eq('provincia', provincia).eq('proveedor_id', id).eq('activo', true).not('categoria', 'is', null) as unknown as Rangeable<TaxRow>,
+  )
   const map = new Map<string, Set<string>>()
-  ;(data as { categoria: string | null; subcategoria: string | null }[]).forEach((r) => {
+  data.forEach((r) => {
     if (!r.categoria) return
     if (!map.has(r.categoria)) map.set(r.categoria, new Set())
     if (r.subcategoria) map.get(r.categoria)!.add(r.subcategoria)
@@ -324,7 +368,7 @@ export async function getMaterialesProveedor(
   if (!id) return []
   let q = supabase
     .from('materiales')
-    .select('id,provincia,categoria,subcategoria,nombre,precio,unidad,url,proveedores(nombre)')
+    .select('id,provincia,categoria,subcategoria,nombre,precio,unidad,url,descripcion,sku,imagen,proveedores(nombre)')
     .eq('provincia', provincia)
     .eq('proveedor_id', id)
     .eq('activo', true)
@@ -351,9 +395,16 @@ export async function getMaterialesProveedor(
         precioBase: r.precio / cantidad,
         subcatApp: r.subcategoria,
         marca: null,
+        descripcion: r.descripcion ?? null,
+        sku: r.sku ?? null,
+        imagen: r.imagen ?? null,
       }
     })
-    .sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'))
+    // Alfabético, pero los SIN precio (0) al final.
+    .sort((a, b) => {
+      if (a.precio > 0 !== b.precio > 0) return a.precio > 0 ? -1 : 1
+      return a.nombre.localeCompare(b.nombre, 'es')
+    })
 }
 
 // ---- Comparador: adapta el agrupado según la unidad ----
@@ -395,7 +446,7 @@ export async function getMaterialesPorKeywords(
   if (terms.length === 0) return []
   let q = supabase
     .from('materiales')
-    .select('id,provincia,categoria,subcategoria,nombre,precio,unidad,url,proveedores(nombre)')
+    .select('id,provincia,categoria,subcategoria,nombre,precio,unidad,url,descripcion,sku,imagen,proveedores(nombre)')
     .eq('provincia', provincia)
     .or(terms.map((t) => `nombre.ilike.*${t}*`).join(','))
   if (busqueda.trim()) q = q.ilike('nombre', `%${busqueda.trim()}%`)

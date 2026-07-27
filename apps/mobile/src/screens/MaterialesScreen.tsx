@@ -1,14 +1,26 @@
 import React, { useEffect, useState } from 'react'
-import { View, Text, ScrollView, TextInput, Pressable, ActivityIndicator, StyleSheet, Dimensions } from 'react-native'
+import { View, Text, ScrollView, TextInput, Pressable, ActivityIndicator, StyleSheet, Dimensions, Linking, Image, Alert } from 'react-native'
 
 const CARD_W = (Dimensions.get('window').width - 40) / 2 // 2 cards a lo ancho (padding 32 + gap 8)
 import { AppHeader } from '../components/AppHeader'
 import { Icon } from '../components/Icon'
 import { useTheme, spacing, radius, Theme } from '../lib/theme'
 import { useZona } from '../lib/zona'
-import { Material, CatApp, getTaxonomiaApp, getMaterialesApp, precioAr, precioBaseAr, sentenceCase } from '../data/materialesApi'
+import {
+  Material,
+  CatApp,
+  getTaxonomiaApp,
+  getMaterialesApp,
+  getProveedores,
+  getProvincias,
+  getTaxonomiaProveedor,
+  getMaterialesProveedor,
+  precioAr,
+  precioBaseAr,
+  sentenceCase,
+} from '../data/materialesApi'
 
-const PROVINCIA = 'Tucumán' // por ahora fijo; después se deriva de la ubicación
+const PROV_DEFAULT = 'Tucumán' // provincia inicial; el selector la cambia si hay más de una con datos
 
 export default function MaterialesScreen() {
   const t = useTheme()
@@ -20,36 +32,38 @@ export default function MaterialesScreen() {
   const [busqueda, setBusqueda] = useState('')
   const [items, setItems] = useState<Material[]>([])
   const [cargando, setCargando] = useState(false)
+  const [provincias, setProvincias] = useState<string[]>([])
+  const [provincia, setProvincia] = useState<string>(PROV_DEFAULT)
+  const [provs, setProvs] = useState<{ nombre: string; slug: string; logo: string | null }[]>([])
+  const [provSel, setProvSel] = useState<string | null>(null) // slug del proveedor, o null = todos
 
   const catSel = catIdx === null ? null : taxo[catIdx]
 
-  // Agrupa por subcategoría → cada una es una fila deslizable para comparar proveedores/marcas.
-  const gruposMap = new Map<string, Material[]>()
-  items.forEach((m) => {
-    const k = m.subcatApp || '—'
-    if (!gruposMap.has(k)) gruposMap.set(k, [])
-    gruposMap.get(k)!.push(m)
-  })
-  const grupos = [...gruposMap.entries()].map(([sub, ms]) => {
-    // Dedup: mismo proveedor·marca·presentación → dejar el de MAYOR precio.
-    const dedup = new Map<string, Material>()
-    ms.forEach((m) => {
-      const k = `${m.proveedor}|${m.marca || ''}|${m.cantidad}|${m.unidadBase}`
-      const prev = dedup.get(k)
-      if (!prev || m.precio > prev.precio) dedup.set(k, m)
-    })
-    return { sub, items: [...dedup.values()].sort((a, b) => a.precio - b.precio) }
-  })
-
-  // Taxonomía = lo que clasificaste en el Sheet (cat_app/subcat_app en Supabase)
+  // Provincias con datos (para el selector). Si la default no tiene datos, uso la primera disponible.
   useEffect(() => {
-    getTaxonomiaApp(PROVINCIA).then((tx) => {
-      setTaxo(tx)
-      if (tx.length && catIdx === null) setCatIdx(0)
+    getProvincias().then((ps) => {
+      setProvincias(ps)
+      if (ps.length && !ps.includes(provincia)) setProvincia(ps[0])
     })
   }, [])
 
-  // Productos de la categoría/subcategoría elegida
+  // Al elegir provincia (o cambiarla): recargar proveedores y resetear el filtro de proveedor.
+  useEffect(() => {
+    setProvSel(null)
+    getProveedores(provincia).then(setProvs)
+  }, [provincia])
+
+  // Taxonomía: de UN proveedor si hay uno elegido, o de todos (comparador)
+  useEffect(() => {
+    const p = provSel ? getTaxonomiaProveedor(provincia, provSel) : getTaxonomiaApp(provincia)
+    p.then((tx) => {
+      setTaxo(tx)
+      setCatIdx(tx.length ? 0 : null)
+      setSubSel(null)
+    })
+  }, [provSel, provincia])
+
+  // Productos de la categoría/subcategoría elegida (scoped al proveedor si hay uno)
   useEffect(() => {
     if (!catSel) {
       setItems([])
@@ -57,17 +71,42 @@ export default function MaterialesScreen() {
     }
     setCargando(true)
     const id = setTimeout(() => {
-      getMaterialesApp(PROVINCIA, catSel.nombre, subSel, busqueda).then((r) => {
+      const p = provSel
+        ? getMaterialesProveedor(provincia, provSel, catSel.nombre, subSel, busqueda)
+        : getMaterialesApp(provincia, catSel.nombre, subSel, busqueda)
+      p.then((r) => {
         setItems(r)
         setCargando(false)
       })
     }, 300)
     return () => clearTimeout(id)
-  }, [catIdx, subSel, busqueda])
+    // depende de `taxo` (no de provSel) para re-consultar recién cuando la taxonomía del proveedor ya cargó
+  }, [catIdx, subSel, busqueda, taxo])
 
   return (
     <View style={{ flex: 1, backgroundColor: t.bg }}>
-      <AppHeader title="Materiales" right={<Icon name="cart" size={23} color={t.onPrimary} />} />
+      <AppHeader
+        title="Materiales"
+        right={
+          <Pressable hitSlop={8} onPress={() => Alert.alert('Presupuestador', 'Pronto vas a poder armar presupuestos con estos materiales.')}>
+            <Icon name="file" size={23} color={t.onPrimary} />
+          </Pressable>
+        }
+      />
+
+      {/* Provincia: solo aparece cuando hay más de una con datos */}
+      {provincias.length > 1 && (
+        <View>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.provinChips}>
+            {provincias.map((pr) => (
+              <Pressable key={pr} onPress={() => setProvincia(pr)} style={[s.provinChip, provincia === pr && s.provinChipOn]}>
+                <Icon name="pin" size={15} color={provincia === pr ? t.onPrimary : t.text2} />
+                <Text style={[s.provinTxt, provincia === pr && s.provinTxtOn]}>{pr}</Text>
+              </Pressable>
+            ))}
+          </ScrollView>
+        </View>
+      )}
 
       <View style={s.search}>
         <Icon name="search" size={20} color={t.text3} />
@@ -79,6 +118,40 @@ export default function MaterialesScreen() {
           onChangeText={setBusqueda}
         />
       </View>
+
+      {/* Proveedores: carrusel de logos. "Todos" compara entre todos; elegí uno para ver solo su catálogo */}
+      {provs.length > 0 && (
+        <View>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.marcas}>
+            {/* Todos */}
+            <Pressable onPress={() => setProvSel(null)} style={s.marcaItem}>
+              <View style={[s.marcaLogo, provSel === null && s.marcaLogoOn]}>
+                <Icon name="container" size={26} color={provSel === null ? t.primary : t.text2} />
+              </View>
+              <Text style={[s.marcaTxt, provSel === null && s.marcaTxtOn]} numberOfLines={1}>
+                Todos
+              </Text>
+            </Pressable>
+            {provs.map((p) => {
+              const on = provSel === p.slug
+              return (
+                <Pressable key={p.slug} onPress={() => setProvSel(p.slug)} style={s.marcaItem}>
+                  <View style={[s.marcaLogo, on && s.marcaLogoOn]}>
+                    {p.logo ? (
+                      <Image source={{ uri: p.logo }} style={s.marcaImg} resizeMode="contain" />
+                    ) : (
+                      <Text style={s.marcaInicial}>{(p.nombre || '?').charAt(0).toUpperCase()}</Text>
+                    )}
+                  </View>
+                  <Text style={[s.marcaTxt, on && s.marcaTxtOn]} numberOfLines={2}>
+                    {p.nombre}
+                  </Text>
+                </Pressable>
+              )
+            })}
+          </ScrollView>
+        </View>
+      )}
 
       {taxo.length === 0 ? (
         <View style={s.center}>
@@ -135,33 +208,42 @@ export default function MaterialesScreen() {
               <Text style={s.vacio}>No hay materiales acá todavía.</Text>
             </View>
           ) : (
-            <ScrollView contentContainerStyle={{ padding: spacing.lg, gap: spacing.md, paddingBottom: spacing.xl }}>
-              {grupos.map((g) => (
-                <View key={g.sub} style={s.seccion}>
-                  {/* Fila deslizable: mismo ítem (subcategoría), distintos proveedores/marcas */}
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.varRow}>
-                    {g.items.map((m, i) => {
-                      const best = g.items.length > 1 && i === 0
-                      return (
-                        <View key={m.id} style={[s.optBox, best && s.optBest]}>
-                          <Text style={s.nombre} numberOfLines={2}>
-                            {m.nombre}
-                          </Text>
-                          <View style={s.metaRow}>
-                            <View style={s.prov}>
-                              <Text style={s.provTxt}>{m.proveedor}</Text>
-                            </View>
-                            {m.marca ? <Text style={s.cat}>{m.marca}</Text> : null}
-                          </View>
-                          <View style={{ marginTop: 'auto' }}>
-                            <Text style={s.precio}>{precioAr(m.precio)}</Text>
-                            <Text style={s.unidad}>{m.unidadBase !== 'u' ? precioBaseAr(m) : 'por unidad'}</Text>
-                          </View>
-                        </View>
-                      )
-                    })}
-                  </ScrollView>
-                </View>
+            <ScrollView contentContainerStyle={{ padding: spacing.lg, gap: spacing.sm, paddingBottom: spacing.xl }}>
+              {/* Cada ítem, full-width. Tocá y abre la página del producto. */}
+              {items.map((m) => (
+                <Pressable
+                  key={m.id}
+                  style={s.itemCard}
+                  onPress={() => m.url && Linking.openURL(m.url)}
+                  disabled={!m.url}
+                >
+                  {m.imagen ? (
+                    <Image source={{ uri: m.imagen }} style={s.thumb} resizeMode="contain" />
+                  ) : (
+                    <View style={[s.thumb, s.thumbVacio]}>
+                      <Icon name="box" size={22} color={t.text3} />
+                    </View>
+                  )}
+                  <View style={{ flex: 1 }}>
+                    <Text style={s.nombre}>{m.nombre}</Text>
+                    <View style={s.metaRow}>
+                      <View style={s.prov}>
+                        <Text style={s.provTxt}>{m.proveedor}</Text>
+                      </View>
+                      {m.marca ? <Text style={s.cat}>{m.marca}</Text> : null}
+                    </View>
+                  </View>
+                  <View style={s.precioBox}>
+                    {m.precio > 0 ? (
+                      <>
+                        <Text style={s.precio}>{precioAr(m.precio)}</Text>
+                        <Text style={s.unidad}>{m.unidadBase !== 'u' ? precioBaseAr(m) : 'por unidad'}</Text>
+                      </>
+                    ) : (
+                      <Text style={s.consultar}>Consultar{'\n'}precio</Text>
+                    )}
+                  </View>
+                </Pressable>
               ))}
             </ScrollView>
           )}
@@ -187,6 +269,29 @@ const styles = (t: Theme) =>
       marginTop: spacing.md,
     },
     searchInput: { flex: 1, color: t.text, fontSize: 15, padding: 0 },
+    provinChips: { gap: spacing.sm, paddingHorizontal: spacing.lg, paddingTop: spacing.md, paddingBottom: 2 },
+    provinChip: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: t.surface, borderWidth: 1, borderColor: t.border, borderRadius: radius.pill, paddingHorizontal: spacing.md, paddingVertical: 8 },
+    provinChipOn: { backgroundColor: t.primary, borderColor: t.primary },
+    provinTxt: { color: t.text2, fontWeight: '800', fontSize: 13 },
+    provinTxtOn: { color: t.onPrimary },
+    marcas: { gap: spacing.md, paddingHorizontal: spacing.lg, paddingTop: spacing.md, paddingBottom: spacing.sm, alignItems: 'flex-start' },
+    marcaItem: { width: 68, alignItems: 'center' },
+    marcaLogo: {
+      width: 60,
+      height: 60,
+      borderRadius: 18,
+      backgroundColor: '#FFFFFF',
+      borderWidth: 1.5,
+      borderColor: t.border,
+      alignItems: 'center',
+      justifyContent: 'center',
+      overflow: 'hidden',
+    },
+    marcaLogoOn: { borderColor: t.primary, borderWidth: 2.5 },
+    marcaImg: { width: 46, height: 46 },
+    marcaInicial: { color: t.text2, fontSize: 24, fontWeight: '900' },
+    marcaTxt: { color: t.text2, fontWeight: '700', fontSize: 11, textAlign: 'center', marginTop: 5, lineHeight: 13 },
+    marcaTxtOn: { color: t.text, fontWeight: '900' },
     chips: { gap: spacing.sm, paddingHorizontal: spacing.lg, paddingVertical: spacing.md },
     chip: {
       backgroundColor: t.surface,
@@ -224,14 +329,27 @@ const styles = (t: Theme) =>
       borderColor: t.border,
       padding: spacing.md,
     },
-    nombre: { color: t.text, fontSize: 14, fontWeight: '700', lineHeight: 19 },
+    itemCard: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.md,
+      backgroundColor: t.surface,
+      borderRadius: radius.lg,
+      borderWidth: 1,
+      borderColor: t.border,
+      padding: spacing.md,
+    },
+    nombre: { color: t.text, fontSize: 12.5, fontWeight: '700', lineHeight: 16 },
     metaRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginTop: 6 },
     prov: { backgroundColor: t.surface2, borderRadius: radius.sm, paddingHorizontal: 7, paddingVertical: 2 },
     provTxt: { fontSize: 10, fontWeight: '800', color: t.text2 },
     cat: { color: t.text3, fontSize: 11, flexShrink: 1 },
+    thumb: { width: 54, height: 54, borderRadius: radius.sm, backgroundColor: '#FFFFFF' },
+    thumbVacio: { alignItems: 'center', justifyContent: 'center', backgroundColor: t.surface2 },
     precioBox: { alignItems: 'flex-end', gap: 2 },
     precio: { color: t.text, fontSize: 19, fontWeight: '900' },
     unidad: { color: t.text3, fontSize: 11 },
+    consultar: { color: t.text2, fontSize: 12, fontWeight: '800', textAlign: 'right', lineHeight: 15 },
     // Comparador: subcategoría → fila deslizable
     seccion: { gap: spacing.sm },
     grupoTitulo: { fontSize: 15, fontWeight: '900', color: t.text, marginTop: spacing.sm },

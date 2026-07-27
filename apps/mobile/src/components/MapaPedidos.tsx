@@ -2,7 +2,8 @@ import React, { useRef, useEffect } from 'react'
 import { View, Text, StyleSheet } from 'react-native'
 import { WebView } from 'react-native-webview'
 import { useTheme } from '../lib/theme'
-import { PEDIDOS, Pedido } from '../data/pedidos'
+// El mapa solo necesita estos campos de cada pedido.
+export type MarcadorMapa = { lat: number; lng: number; oficio: string; desc: string; min: number }
 
 // La API key va en .env (EXPO_PUBLIC_GOOGLE_MAPS_JS_KEY) — nunca hardcodeada.
 const GOOGLE_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_JS_KEY ?? ''
@@ -74,13 +75,13 @@ const html = (key: string, markers: { lat: number; lng: number; oficio: string; 
 export function MapaPedidos({
   height,
   fill,
-  pedidos = PEDIDOS,
+  pedidos = [],
   selected,
   onSelect,
 }: {
   height?: number
   fill?: boolean
-  pedidos?: Pedido[]
+  pedidos?: MarcadorMapa[]
   selected?: number
   onSelect?: (i: number) => void
 }) {

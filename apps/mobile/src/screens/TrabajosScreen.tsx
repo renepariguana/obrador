@@ -1,12 +1,12 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef, useState, useCallback } from 'react'
 import { View, Text, TextInput, Pressable, ScrollView, StyleSheet, Dimensions } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useNavigation } from '@react-navigation/native'
+import { useNavigation, useFocusEffect } from '@react-navigation/native'
 import { MapaPedidos } from '../components/MapaPedidos'
 import { Icon } from '../components/Icon'
 import { FiltrosSheet, Filtros } from '../components/FiltrosSheet'
 import { useTheme, spacing, radius, Theme } from '../lib/theme'
-import { pedidosDeZona } from '../data/pedidos'
+import { pedidosAbiertos, PedidoVista } from '../data/pedidosApi'
 import { useZona } from '../lib/zona'
 
 const FILTROS = ['Todos', 'Mi rubro', 'Urgentes', 'Hoy']
@@ -22,11 +22,19 @@ export default function TrabajosScreen() {
   const [showFiltros, setShowFiltros] = useState(false)
   const [filtro, setFiltro] = useState('Todos')
   const [sel, setSel] = useState(0)
+  const [todos, setTodos] = useState<PedidoVista[]>([])
   const scrollRef = useRef<ScrollView>(null)
   const hayFiltro = filtros.zona !== null || filtros.rubro !== null || filtros.urgente
 
-  // Por defecto: todos (ordenados, tu zona primero). Aplica los filtros elegidos.
-  let PEDIDOS = pedidosDeZona(zona)
+  // Traer pedidos abiertos reales cada vez que se entra a la pantalla (para ver los recién publicados).
+  useFocusEffect(
+    useCallback(() => {
+      pedidosAbiertos().then(setTodos)
+    }, [])
+  )
+
+  // Por defecto: todos. Aplica los filtros elegidos.
+  let PEDIDOS = todos
   if (filtros.zona) PEDIDOS = PEDIDOS.filter((p) => p.zona === filtros.zona)
   if (filtros.rubro) PEDIDOS = PEDIDOS.filter((p) => p.oficio === filtros.rubro)
   if (filtros.urgente) PEDIDOS = PEDIDOS.filter((p) => p.urgente)
@@ -116,9 +124,7 @@ export default function TrabajosScreen() {
                     <Text style={s.detailName}>
                       {p.cliente} necesita un {p.oficio}
                     </Text>
-                    <Text style={s.detailMeta}>
-                      A {p.dist} · {p.zona}
-                    </Text>
+                    <Text style={s.detailMeta}>{p.zona}</Text>
                   </View>
                   <View style={s.tag}>
                     <Text style={s.tagTxt}>{p.tag}</Text>
@@ -130,7 +136,8 @@ export default function TrabajosScreen() {
                 <View style={s.detailFoot}>
                   <Icon name="clock" size={14} color={t.text3} />
                   <Text style={s.footText}>
-                    {p.hace} · {p.postulados} postulados
+                    {p.hace}
+                    {p.yaPostulado ? ' · Ya te postulaste' : ''}
                   </Text>
                 </View>
 
@@ -142,11 +149,13 @@ export default function TrabajosScreen() {
                     <Text style={s.btnGhostTxt}>Ver detalle</Text>
                   </Pressable>
                   <Pressable
-                    style={s.btnPrimary}
+                    style={[s.btnPrimary, p.yaPostulado && s.btnDone]}
                     onPress={() => navigation.navigate('DetallePedido', { pedido: p })}
                   >
-                    <Icon name="check" size={18} color={t.onPrimary} />
-                    <Text style={s.btnPrimaryTxt}>Postularme</Text>
+                    <Icon name="check" size={18} color={p.yaPostulado ? t.text2 : t.onPrimary} />
+                    <Text style={[s.btnPrimaryTxt, p.yaPostulado && s.btnDoneTxt]}>
+                      {p.yaPostulado ? 'Ya postulado' : 'Postularme'}
+                    </Text>
                   </Pressable>
                 </View>
               </View>
@@ -227,7 +236,7 @@ const styles = (t: Theme) =>
       shadowOffset: { width: 0, height: 2 },
       elevation: 2,
     },
-    liveDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: t.danger },
+    liveDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: t.text },
     liveBold: { color: t.text, fontWeight: '800', fontSize: 13 },
     liveSub: { color: t.text2, fontWeight: '600', fontSize: 13 },
     chips: { gap: spacing.sm, paddingVertical: spacing.md, paddingHorizontal: 2 },
@@ -293,6 +302,8 @@ const styles = (t: Theme) =>
       justifyContent: 'center',
     },
     btnPrimaryTxt: { color: t.onPrimary, fontWeight: '800', fontSize: 15 },
+    btnDone: { backgroundColor: t.surface2 },
+    btnDoneTxt: { color: t.text2 },
     dots: { flexDirection: 'row', gap: 6, justifyContent: 'center', marginTop: spacing.sm, paddingBottom: spacing.sm },
     dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: t.border },
     dotOn: { width: 18, backgroundColor: t.primary },

@@ -1,9 +1,9 @@
-import React from 'react'
-import { View, Text, FlatList, Pressable, StyleSheet } from 'react-native'
+import React, { useEffect, useState } from 'react'
+import { View, Text, FlatList, Pressable, StyleSheet, ActivityIndicator } from 'react-native'
 import { AppHeader } from '../components/AppHeader'
 import { Icon } from '../components/Icon'
 import { useTheme, spacing, radius, Theme } from '../lib/theme'
-import { porOficio, Profesional } from '../data/profesionales'
+import { listarTrabajadores, Trabajador } from '../data/trabajadoresApi'
 import { useZona } from '../lib/zona'
 
 export default function OficioScreen({ route, navigation }: any) {
@@ -11,9 +11,18 @@ export default function OficioScreen({ route, navigation }: any) {
   const s = styles(t)
   const { zona } = useZona()
   const oficio: string = route?.params?.oficio ?? 'Profesionales'
-  const data = porOficio(oficio, zona)
+  const [data, setData] = useState<Trabajador[]>([])
+  const [cargando, setCargando] = useState(true)
 
-  const renderItem = ({ item, index }: { item: Profesional; index: number }) => {
+  useEffect(() => {
+    setCargando(true)
+    listarTrabajadores(oficio).then((ws) => {
+      setData(ws)
+      setCargando(false)
+    })
+  }, [oficio])
+
+  const renderItem = ({ item, index }: { item: Trabajador; index: number }) => {
     const top = index === 0
     return (
       <Pressable
@@ -51,7 +60,8 @@ export default function OficioScreen({ route, navigation }: any) {
             )}
           </View>
           <Text style={s.oficio}>
-            {item.oficio} · a {item.dist}
+            {item.oficio}
+            {item.zona ? ` · ${item.zona}` : ''}
           </Text>
           <View style={s.metaRow}>
             <Icon name="star" size={13} color={t.rating} />
@@ -82,11 +92,24 @@ export default function OficioScreen({ route, navigation }: any) {
         data={data}
         keyExtractor={(p) => p.id}
         renderItem={renderItem}
-        contentContainerStyle={{ padding: spacing.md, gap: spacing.sm }}
+        contentContainerStyle={{ padding: spacing.md, gap: spacing.sm, flexGrow: 1 }}
         ListHeaderComponent={
-          <Text style={s.hint}>
-            {zona} · ordenados por puntaje (el que más cobró por la app aparece primero)
-          </Text>
+          data.length > 0 ? (
+            <Text style={s.hint}>
+              {zona} · ordenados por puntaje (el que más cobró por la app aparece primero)
+            </Text>
+          ) : null
+        }
+        ListEmptyComponent={
+          cargando ? (
+            <ActivityIndicator color={t.primary} style={{ marginTop: spacing.xl }} />
+          ) : (
+            <View style={s.vacioBox}>
+              <Icon name="wrench" size={40} color={t.text3} />
+              <Text style={s.vacio}>Todavía no hay {oficio.toLowerCase()} en tu zona.</Text>
+              <Text style={s.vacioSub}>Sé el primero: activá tu perfil profesional desde Mi Perfil.</Text>
+            </View>
+          )
         }
       />
     </View>
@@ -98,6 +121,9 @@ const styles = (t: Theme) =>
     headerLeft: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
     headerTitle: { color: t.onPrimary, fontSize: 20, fontWeight: '900', letterSpacing: -0.4 },
     hint: { color: t.text2, fontSize: 12, paddingHorizontal: spacing.xs, paddingBottom: spacing.sm },
+    vacioBox: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing.sm, paddingHorizontal: spacing.xl, paddingTop: 80 },
+    vacio: { color: t.text2, fontSize: 15, fontWeight: '700', textAlign: 'center' },
+    vacioSub: { color: t.text3, fontSize: 13, textAlign: 'center' },
     card: {
       flexDirection: 'row',
       alignItems: 'center',

@@ -42,7 +42,7 @@ export function ConfirmarUbicacion({
                 </View>
                 {on && (
                   <View style={s.check}>
-                    <Icon name="check" size={13} color="#FFFFFF" />
+                    <Icon name="check" size={13} color={t.onPrimary} />
                   </View>
                 )}
               </Pressable>

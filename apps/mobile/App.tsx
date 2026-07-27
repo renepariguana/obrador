@@ -16,6 +16,8 @@ import TrabajosScreen from './src/screens/TrabajosScreen'
 import DetallePedidoScreen from './src/screens/DetallePedidoScreen'
 import PedidosScreen from './src/screens/PedidosScreen'
 import MiPerfilScreen from './src/screens/MiPerfilScreen'
+import BloqueadosScreen from './src/screens/BloqueadosScreen'
+import MisPostulacionesScreen from './src/screens/MisPostulacionesScreen'
 import LoginScreen from './src/screens/LoginScreen'
 import UbicacionScreen from './src/screens/UbicacionScreen'
 import { Icon, IconName } from './src/components/Icon'
@@ -47,12 +49,31 @@ function TrabajosStack() {
   )
 }
 
+function PedidosStack() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="PedidosHome" component={PedidosScreen} />
+      <Stack.Screen name="DetallePedido" component={DetallePedidoScreen} />
+    </Stack.Navigator>
+  )
+}
+
+function MiPerfilStack() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="MiPerfilHome" component={MiPerfilScreen} />
+      <Stack.Screen name="Bloqueados" component={BloqueadosScreen} />
+      <Stack.Screen name="MisPostulaciones" component={MisPostulacionesScreen} />
+    </Stack.Navigator>
+  )
+}
+
 const TABS: { name: string; comp: React.ComponentType; icon: IconName; iconOn?: IconName }[] = [
   { name: 'Inicio', comp: InicioStack, icon: 'home', iconOn: 'homeFill' },
   { name: 'Materiales', comp: MaterialesScreen, icon: 'container', iconOn: 'containerFill' },
   { name: 'Trabajos', comp: TrabajosStack, icon: 'obrador', iconOn: 'obrador' },
-  { name: 'Pedidos', comp: PedidosScreen, icon: 'chat', iconOn: 'chatFill' },
-  { name: 'Mi perfil', comp: MiPerfilScreen, icon: 'user', iconOn: 'userFill' },
+  { name: 'Pedidos', comp: PedidosStack, icon: 'chat', iconOn: 'chatFill' },
+  { name: 'Mi perfil', comp: MiPerfilStack, icon: 'user', iconOn: 'userFill' },
 ]
 
 function RootTabs() {

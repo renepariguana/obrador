@@ -1,22 +1,81 @@
-import React, { useState } from 'react'
-import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native'
+import React, { useEffect, useState } from 'react'
+import { View, Text, ScrollView, Pressable, StyleSheet, Modal, TextInput, Alert, ActivityIndicator, Linking } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { useNavigation } from '@react-navigation/native'
 import { Icon, IconName } from '../components/Icon'
 import { AppHeader } from '../components/AppHeader'
 import { useTheme, spacing, radius, Theme } from '../lib/theme'
 import { useAuth } from '../lib/auth'
+import { useGate } from '../lib/gate'
+import { getPerfil, guardarPerfil, Perfil, getMiPerfilProfesional, guardarPerfilProfesional, OFICIOS } from '../data/perfilApi'
+
+// Base pública de las páginas legales (GitHub Pages). Ajustar al repo real → luego obrador.com.ar.
+const LEGAL_BASE = 'https://renepariguana.github.io/obrador'
 
 export default function MiPerfilScreen() {
   const t = useTheme()
   const insets = useSafeAreaInsets()
   const s = styles(t)
-  const { cerrarSesion, logueado, irLogin } = useAuth()
+  const { cerrarSesion, logueado, irLogin, usuario, borrarCuenta } = useAuth()
+  const gate = useGate()
+  const navigation = useNavigation<any>()
   const [verificado] = useState(false)
+  const [perfil, setPerfil] = useState<Perfil | null>(null)
+  const [editOpen, setEditOpen] = useState(false)
+  const [form, setForm] = useState({ nombre: '', telefono: '', whatsapp: '', zona: '' })
+  const [guardando, setGuardando] = useState(false)
+  // Perfil profesional (ofrecer servicios)
+  const [profOpen, setProfOpen] = useState(false)
+  const [esTrabajador, setEsTrabajador] = useState(false)
+  const [profDesc, setProfDesc] = useState('')
+  const [profOficios, setProfOficios] = useState<string[]>([])
+  const [profGuardando, setProfGuardando] = useState(false)
+
+  useEffect(() => {
+    if (!logueado) { setPerfil(null); setEsTrabajador(false); return }
+    getPerfil().then((p) => {
+      if (p) {
+        setPerfil(p)
+        setForm({ nombre: p.nombre || '', telefono: p.telefono || '', whatsapp: p.whatsapp || '', zona: p.zona || '' })
+      }
+    })
+    getMiPerfilProfesional().then((pp) => {
+      if (pp) { setEsTrabajador(pp.esTrabajador); setProfDesc(pp.descripcion); setProfOficios(pp.oficios) }
+    })
+  }, [logueado])
+
+  const toggleOficio = (o: string) =>
+    setProfOficios((xs) => (xs.includes(o) ? xs.filter((x) => x !== o) : [...xs, o]))
+
+  const guardarProf = async () => {
+    if (profOficios.length === 0) return Alert.alert('Elegí al menos un oficio')
+    setProfGuardando(true)
+    const r = await guardarPerfilProfesional(profDesc, profOficios, perfil?.zona ?? null)
+    setProfGuardando(false)
+    if (r.error) return Alert.alert('Error', r.error)
+    setEsTrabajador(true)
+    setProfOpen(false)
+  }
+
+  const guardar = async () => {
+    setGuardando(true)
+    const r = await guardarPerfil(form)
+    setGuardando(false)
+    if (r.error) return Alert.alert('Error', r.error)
+    setPerfil((p) => (p ? { ...p, ...form } : p))
+    setEditOpen(false)
+  }
+  const confirmarBorrar = () => {
+    Alert.alert('Eliminar cuenta', 'Se borrará tu cuenta y tus datos. Esta acción no se puede deshacer.', [
+      { text: 'Cancelar', style: 'cancel' },
+      { text: 'Eliminar', style: 'destructive', onPress: async () => { const r = await borrarCuenta(); if (r.error) Alert.alert('Error', r.error) } },
+    ])
+  }
 
   const Row = ({ icon, label, onPress, danger, tag }: { icon: IconName; label: string; onPress?: () => void; danger?: boolean; tag?: string }) => (
     <Pressable style={s.row} onPress={onPress}>
-      <Icon name={icon} size={22} color={danger ? t.danger : t.text} />
-      <Text style={[s.rowLabel, danger && { color: t.danger }]}>{label}</Text>
+      <Icon name={icon} size={22} color={t.text} />
+      <Text style={[s.rowLabel, danger && { fontWeight: '800' }]}>{label}</Text>
       {tag && (
         <View style={s.tag}>
           <Text style={s.tagTxt}>{tag}</Text>
@@ -26,8 +85,8 @@ export default function MiPerfilScreen() {
     </Pressable>
   )
 
-  const Tile = ({ icon, label }: { icon: IconName; label: string }) => (
-    <Pressable style={s.tile}>
+  const Tile = ({ icon, label, onPress }: { icon: IconName; label: string; onPress?: () => void }) => (
+    <Pressable style={s.tile} onPress={onPress}>
       <View style={s.tileIcon}>
         <Icon name={icon} size={24} color={t.text} />
       </View>
@@ -54,17 +113,12 @@ export default function MiPerfilScreen() {
 
           <View style={s.gGap} />
 
-          <Pressable style={s.gRow}>
-            <Icon name="phone" size={22} color={t.text} />
+          <Pressable style={s.gRow} onPress={() => Linking.openURL('mailto:renepariguana@gmail.com?subject=Ayuda Obrador')}>
+            <Icon name="mail" size={22} color={t.text} />
             <Text style={s.gLabel}>Ayuda</Text>
             <Icon name="chevron" size={18} color={t.text3} />
           </Pressable>
-          <Pressable style={s.gRow}>
-            <Icon name="store" size={22} color={t.text} />
-            <Text style={s.gLabel}>Registrar mi negocio</Text>
-            <Icon name="chevron" size={18} color={t.text3} />
-          </Pressable>
-          <Pressable style={s.gRow}>
+          <Pressable style={s.gRow} onPress={() => Linking.openURL(LEGAL_BASE)}>
             <Icon name="info" size={22} color={t.text} />
             <Text style={s.gLabel}>Información legal</Text>
             <Icon name="chevron" size={18} color={t.text3} />
@@ -83,11 +137,18 @@ export default function MiPerfilScreen() {
       >
         {/* Saludo */}
         <View style={s.greet}>
-          <Text style={s.hola}>¡Hola, René!</Text>
+          <Text style={s.hola}>
+            ¡Hola{perfil?.nombre ? `, ${perfil.nombre.split(' ')[0]}` : ''}!
+          </Text>
           <View style={s.avatarSmall}>
             <Icon name="user" size={22} color={t.text3} />
           </View>
         </View>
+        {!perfil?.nombre && (
+          <Pressable style={s.completarNombre} onPress={() => setEditOpen(true)}>
+            <Text style={s.completarNombreTxt}>Completá tu nombre y datos de contacto →</Text>
+          </Pressable>
+        )}
 
         {/* Banner verificación */}
         {!verificado && (
@@ -102,7 +163,7 @@ export default function MiPerfilScreen() {
 
         {/* Accesos rápidos */}
         <View style={s.tiles}>
-          <Tile icon="user" label="Datos personales" />
+          <Tile icon="user" label="Datos personales" onPress={() => setEditOpen(true)} />
           <Tile icon="star" label="Mis reseñas" />
           <Tile icon="badge" label="Verificación" />
           <Tile icon="phone" label="Ayuda" />
@@ -123,37 +184,112 @@ export default function MiPerfilScreen() {
           <Text style={s.progressHint}>Verificá tu identidad y sumá tu primer trabajo.</Text>
         </View>
 
-        {/* Perfil */}
-        <Text style={s.section}>Perfil</Text>
-        <View style={s.group}>
-          <Row icon="pin" label="Direcciones" />
-          <Row icon="heart" label="Favoritos" />
-          <Row icon="wrench" label="Mis rubros" />
-        </View>
-
         {/* Actividad */}
         <Text style={s.section}>Actividad</Text>
         <View style={s.group}>
-          <Row icon="chat" label="Mis pedidos" />
-          <Row icon="briefcase" label="Mis trabajos" />
-          <Row icon="hand" label="Mis postulaciones" />
-          <Row icon="card" label="Medios de pago" />
+          <Row icon="chat" label="Mis pedidos" onPress={() => navigation.navigate('Pedidos')} />
+          <Row icon="hand" label="Mis postulaciones" onPress={() => navigation.navigate('MisPostulaciones')} />
         </View>
 
         {/* Configuración */}
         <Text style={s.section}>Configuración</Text>
         <View style={s.group}>
           <Row icon="bell" label="Notificaciones" />
-          <Row icon="info" label="Información legal" />
-          <Row icon="store" label="Ofrecer mis servicios" tag="Nuevo" />
+          <Row
+            icon="lock"
+            label="Usuarios bloqueados"
+            onPress={() => gate('ver tus bloqueados', () => navigation.navigate('Bloqueados'))}
+          />
+          <Row icon="file" label="Términos y condiciones" onPress={() => Linking.openURL(`${LEGAL_BASE}/terminos.html`)} />
+          <Row icon="info" label="Política de privacidad" onPress={() => Linking.openURL(`${LEGAL_BASE}/privacidad.html`)} />
+          <Row
+            icon="store"
+            label={esTrabajador ? 'Mi perfil profesional' : 'Ofrecer mis servicios'}
+            tag={esTrabajador ? undefined : 'Nuevo'}
+            onPress={() => gate('ofrecer tus servicios', () => setProfOpen(true))}
+          />
         </View>
 
         {/* Sesión */}
         <View style={[s.group, { marginTop: spacing.lg }]}>
           <Row icon="logout" label="Cerrar sesión" onPress={cerrarSesion} />
-          <Row icon="trash" label="Eliminar cuenta" danger />
+          <Row icon="trash" label="Eliminar cuenta" danger onPress={confirmarBorrar} />
         </View>
       </ScrollView>
+
+      {/* Editar datos personales */}
+      <Modal visible={editOpen} animationType="slide" transparent onRequestClose={() => setEditOpen(false)}>
+        <View style={s.modalBg}>
+          <View style={[s.modalCard, { paddingBottom: insets.bottom + spacing.md }]}>
+            <Text style={s.modalTitle}>Tus datos</Text>
+            {(
+              [
+                ['nombre', 'Nombre y apellido'],
+                ['telefono', 'Teléfono'],
+                ['whatsapp', 'WhatsApp'],
+                ['zona', 'Zona / barrio'],
+              ] as const
+            ).map(([k, label]) => (
+              <View key={k} style={s.field}>
+                <Text style={s.fieldLabel}>{label}</Text>
+                <TextInput
+                  style={s.fieldInput}
+                  value={(form as Record<string, string>)[k]}
+                  onChangeText={(v) => setForm((f) => ({ ...f, [k]: v }))}
+                  placeholder={label}
+                  placeholderTextColor={t.text3}
+                  keyboardType={k === 'telefono' || k === 'whatsapp' ? 'phone-pad' : 'default'}
+                />
+              </View>
+            ))}
+            <Pressable style={s.modalBtn} disabled={guardando} onPress={guardar}>
+              {guardando ? <ActivityIndicator color={t.onPrimary} /> : <Text style={s.modalBtnTxt}>Guardar</Text>}
+            </Pressable>
+            <Pressable onPress={() => setEditOpen(false)} hitSlop={8}>
+              <Text style={s.modalCancel}>Cancelar</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Ofrecer mis servicios (perfil profesional) */}
+      <Modal visible={profOpen} animationType="slide" transparent onRequestClose={() => setProfOpen(false)}>
+        <View style={s.modalBg}>
+          <View style={[s.modalCard, { paddingBottom: insets.bottom + spacing.md, maxHeight: '85%' }]}>
+            <ScrollView showsVerticalScrollIndicator={false}>
+              <Text style={s.modalTitle}>Ofrecer mis servicios</Text>
+              <Text style={s.fieldLabel}>¿Qué oficios ofrecés?</Text>
+              <View style={s.oficioChips}>
+                {OFICIOS.map((o) => {
+                  const on = profOficios.includes(o)
+                  return (
+                    <Pressable key={o} onPress={() => toggleOficio(o)} style={[s.oficioChip, on && s.oficioChipOn]}>
+                      <Text style={[s.oficioChipTxt, on && s.oficioChipTxtOn]}>{o}</Text>
+                    </Pressable>
+                  )
+                })}
+              </View>
+              <View style={[s.field, { marginTop: spacing.md }]}>
+                <Text style={s.fieldLabel}>Contanos sobre tu trabajo (opcional)</Text>
+                <TextInput
+                  style={[s.fieldInput, { height: 90, paddingTop: spacing.sm, textAlignVertical: 'top' }]}
+                  value={profDesc}
+                  onChangeText={setProfDesc}
+                  placeholder="Ej: 10 años de experiencia en instalaciones…"
+                  placeholderTextColor={t.text3}
+                  multiline
+                />
+              </View>
+              <Pressable style={s.modalBtn} disabled={profGuardando} onPress={guardarProf}>
+                {profGuardando ? <ActivityIndicator color={t.onPrimary} /> : <Text style={s.modalBtnTxt}>{esTrabajador ? 'Guardar cambios' : 'Activar mi perfil'}</Text>}
+              </Pressable>
+              <Pressable onPress={() => setProfOpen(false)} hitSlop={8}>
+                <Text style={s.modalCancel}>Cancelar</Text>
+              </Pressable>
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </View>
   )
 }
@@ -173,6 +309,22 @@ const styles = (t: Theme) =>
     gRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingHorizontal: spacing.lg, height: 60 },
     gLabel: { flex: 1, color: t.text, fontSize: 16, fontWeight: '600' },
     gGap: { height: spacing.md },
+    completarNombre: { marginHorizontal: spacing.lg, marginTop: -spacing.sm, marginBottom: spacing.sm },
+    completarNombreTxt: { color: t.primary, fontSize: 14, fontWeight: '800' },
+    modalBg: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
+    modalCard: { backgroundColor: t.bg, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: spacing.lg, gap: spacing.sm },
+    modalTitle: { color: t.text, fontSize: 20, fontWeight: '900', marginBottom: spacing.xs },
+    field: { gap: 4 },
+    fieldLabel: { color: t.text2, fontSize: 13, fontWeight: '700' },
+    fieldInput: { backgroundColor: t.surface2, borderRadius: radius.lg, height: 50, paddingHorizontal: spacing.md, color: t.text, fontSize: 16, borderWidth: 1, borderColor: t.border },
+    modalBtn: { backgroundColor: t.primary, borderRadius: radius.pill, height: 52, alignItems: 'center', justifyContent: 'center', marginTop: spacing.sm },
+    modalBtnTxt: { color: t.onPrimary, fontSize: 16, fontWeight: '800' },
+    modalCancel: { color: t.text2, fontSize: 15, fontWeight: '700', textAlign: 'center', marginTop: spacing.sm },
+    oficioChips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 4 },
+    oficioChip: { backgroundColor: t.surface2, borderRadius: radius.pill, borderWidth: 1, borderColor: t.border, paddingHorizontal: spacing.md, paddingVertical: 8 },
+    oficioChipOn: { backgroundColor: t.primary, borderColor: t.primary },
+    oficioChipTxt: { color: t.text2, fontSize: 13, fontWeight: '700' },
+    oficioChipTxtOn: { color: t.onPrimary },
     guestWrap: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: spacing.xl },
     guestIcon: { width: 88, height: 88, borderRadius: 44, backgroundColor: t.surface2, alignItems: 'center', justifyContent: 'center' },
     guestTitle: { color: t.text, fontSize: 20, fontWeight: '900', marginTop: spacing.lg },

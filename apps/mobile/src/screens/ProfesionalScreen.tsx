@@ -1,18 +1,59 @@
-import React from 'react'
-import { View, Text, ScrollView, Image, Pressable, StyleSheet, Dimensions } from 'react-native'
+import React, { useEffect, useState } from 'react'
+import { View, Text, ScrollView, Pressable, StyleSheet, Linking, Alert } from 'react-native'
 import { AppHeader } from '../components/AppHeader'
 import { Icon } from '../components/Icon'
 import { useTheme, spacing, radius, Theme } from '../lib/theme'
-import { Profesional, trabajosDe } from '../data/profesionales'
-
-const { width } = Dimensions.get('window')
-const CARD = (width - spacing.md * 2 - spacing.sm) / 2
+import { Trabajador, Review, getTrabajador } from '../data/trabajadoresApi'
+import { ReportarSheet } from '../components/ReportarSheet'
+import { bloquear } from '../data/bloqueosApi'
+import { useGate } from '../lib/gate'
 
 export default function ProfesionalScreen({ route, navigation }: any) {
   const t = useTheme()
   const s = styles(t)
-  const pro: Profesional = route.params.pro
-  const obras = trabajosDe(pro.oficio)
+  const gate = useGate()
+  const inicial: Trabajador = route.params.pro
+  const [pro, setPro] = useState<Trabajador>(inicial)
+  const [reviews, setReviews] = useState<Review[]>([])
+  const [reportOpen, setReportOpen] = useState(false)
+
+  useEffect(() => {
+    getTrabajador(inicial.id).then((d) => {
+      if (d) {
+        setPro(d.trabajador)
+        setReviews(d.reviews)
+      }
+    })
+  }, [inicial.id])
+
+  const bloquearUsuario = () =>
+    Alert.alert(`¿Bloquear a ${pro.nombre}?`, 'No vas a ver más su perfil ni sus pedidos.', [
+      { text: 'Cancelar', style: 'cancel' },
+      {
+        text: 'Bloquear',
+        onPress: async () => {
+          const r = await bloquear(pro.id)
+          if (r.error) return Alert.alert('Error', r.error)
+          navigation.goBack()
+        },
+      },
+    ])
+
+  const menu = () =>
+    gate('moderar', () =>
+      Alert.alert(pro.nombre, undefined, [
+        { text: 'Reportar', onPress: () => setReportOpen(true) },
+        { text: 'Bloquear', onPress: bloquearUsuario },
+        { text: 'Cancelar', style: 'cancel' },
+      ])
+    )
+
+  const contactar = () =>
+    gate('contactar al profesional', () => {
+      const wpp = (pro.whatsapp || '').replace(/\D/g, '')
+      if (wpp) Linking.openURL(`https://wa.me/54${wpp}`)
+      else if (pro.telefono) Linking.openURL(`tel:${pro.telefono}`)
+    })
 
   return (
     <View style={{ flex: 1, backgroundColor: t.bg }}>
@@ -24,6 +65,11 @@ export default function ProfesionalScreen({ route, navigation }: any) {
             </Pressable>
             <Text style={s.headerTitle}>Perfil</Text>
           </View>
+        }
+        right={
+          <Pressable onPress={menu} hitSlop={10}>
+            <Icon name="dots" size={22} color={t.onPrimary} />
+          </Pressable>
         }
       />
 
@@ -69,38 +115,47 @@ export default function ProfesionalScreen({ route, navigation }: any) {
             </View>
           </View>
 
-          <Pressable style={s.cta}>
-            <Icon name="chat" size={18} color={t.onPrimary} />
-            <Text style={s.ctaTxt}>Pedir presupuesto</Text>
+          <Pressable style={s.cta} onPress={contactar}>
+            <Icon name="whatsapp" size={18} color={t.onPrimary} />
+            <Text style={s.ctaTxt}>Contactar</Text>
           </Pressable>
         </View>
 
-        {/* Trabajos realizados */}
-        <Text style={s.section}>Trabajos realizados</Text>
-        <View style={s.grid}>
-          {obras.map((o) => (
-            <Pressable key={o.id} style={s.obra}>
-              <Image
-                source={{ uri: `https://picsum.photos/seed/${pro.id}${o.id}/500/360` }}
-                style={s.foto}
-              />
-              <View style={s.obraBody}>
-                <Text style={s.obraTitle} numberOfLines={1}>
-                  {o.titulo}
-                </Text>
-                <Text style={s.obraDesc} numberOfLines={2}>
-                  {o.desc}
-                </Text>
-                <View style={s.obraMeta}>
-                  <Icon name="star" size={12} color={t.rating} />
-                  <Text style={s.obraRating}>{o.rating.toFixed(1)}</Text>
-                  <Text style={s.obraFecha}>· {o.fecha}</Text>
+        {pro.descripcion ? (
+          <>
+            <Text style={s.section}>Sobre {pro.nombre.split(' ')[0]}</Text>
+            <Text style={s.descripcion}>{pro.descripcion}</Text>
+          </>
+        ) : null}
+
+        <Text style={s.section}>Reseñas</Text>
+        {reviews.length === 0 ? (
+          <Text style={s.sinReviews}>Todavía no tiene reseñas.</Text>
+        ) : (
+          <View style={s.reviewsBox}>
+            {reviews.map((r) => (
+              <View key={r.id} style={s.review}>
+                <View style={s.reviewHead}>
+                  <Text style={s.reviewAutor}>{r.autorNombre}</Text>
+                  <View style={s.reviewStars}>
+                    <Icon name="star" size={13} color={t.rating} />
+                    <Text style={s.reviewRating}>{r.estrellas}</Text>
+                  </View>
                 </View>
+                {r.comentario ? <Text style={s.reviewTxt}>{r.comentario}</Text> : null}
               </View>
-            </Pressable>
-          ))}
-        </View>
+            ))}
+          </View>
+        )}
       </ScrollView>
+
+      <ReportarSheet
+        visible={reportOpen}
+        tipo="usuario"
+        targetId={pro.id}
+        titulo={pro.nombre}
+        onClose={() => setReportOpen(false)}
+      />
     </View>
   )
 }
@@ -180,25 +235,13 @@ const styles = (t: Theme) =>
       paddingTop: spacing.xl,
       paddingBottom: spacing.md,
     },
-    grid: {
-      flexDirection: 'row',
-      flexWrap: 'wrap',
-      paddingHorizontal: spacing.md,
-      gap: spacing.sm,
-    },
-    obra: {
-      width: CARD,
-      backgroundColor: t.surface,
-      borderRadius: radius.lg,
-      borderWidth: 1,
-      borderColor: t.border,
-      overflow: 'hidden',
-    },
-    foto: { width: '100%', height: 110, backgroundColor: t.surface2 },
-    obraBody: { padding: spacing.sm },
-    obraTitle: { color: t.text, fontSize: 13, fontWeight: '800' },
-    obraDesc: { color: t.text2, fontSize: 11, marginTop: 2, lineHeight: 15 },
-    obraMeta: { flexDirection: 'row', alignItems: 'center', gap: 3, marginTop: 6 },
-    obraRating: { color: t.text, fontSize: 11, fontWeight: '700' },
-    obraFecha: { color: t.text3, fontSize: 11 },
+    descripcion: { color: t.text2, fontSize: 14, lineHeight: 20, paddingHorizontal: spacing.md },
+    sinReviews: { color: t.text3, fontSize: 14, paddingHorizontal: spacing.md },
+    reviewsBox: { paddingHorizontal: spacing.md, gap: spacing.sm },
+    review: { backgroundColor: t.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: t.border, padding: spacing.md },
+    reviewHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+    reviewAutor: { color: t.text, fontSize: 14, fontWeight: '800' },
+    reviewStars: { flexDirection: 'row', alignItems: 'center', gap: 3 },
+    reviewRating: { color: t.text, fontSize: 13, fontWeight: '700' },
+    reviewTxt: { color: t.text2, fontSize: 13, lineHeight: 18, marginTop: 4 },
   })

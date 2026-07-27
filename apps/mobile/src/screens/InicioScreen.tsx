@@ -1,13 +1,13 @@
-import React, { useState } from 'react'
+import React, { useState, useCallback } from 'react'
 import { View, Text, ScrollView, TextInput, Pressable, StyleSheet } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useNavigation } from '@react-navigation/native'
+import { useNavigation, useFocusEffect } from '@react-navigation/native'
 import { MapaPedidos } from '../components/MapaPedidos'
 import { ConfirmarUbicacion } from '../components/ConfirmarUbicacion'
 import { Icon, IconName } from '../components/Icon'
 import { useTheme, spacing, radius, Theme } from '../lib/theme'
 import { cercaDe, Profesional } from '../data/profesionales'
-import { pedidosDeZona } from '../data/pedidos'
+import { pedidosAbiertos, PedidoVista } from '../data/pedidosApi'
 import { useZona } from '../lib/zona'
 
 type Oficio = { label: string; icon: IconName }
@@ -67,6 +67,13 @@ export default function InicioScreen() {
   const navigation = useNavigation<any>()
   const { zona, setZona } = useZona()
   const [showUbic, setShowUbic] = useState(false)
+  const [pedidos, setPedidos] = useState<PedidoVista[]>([])
+
+  useFocusEffect(
+    useCallback(() => {
+      pedidosAbiertos().then(setPedidos)
+    }, [])
+  )
 
   const SectionHeader = ({ title, action = 'Ver todos' }: { title: string; action?: string }) => (
     <View style={s.sectionRow}>
@@ -84,7 +91,7 @@ export default function InicioScreen() {
           <View style={s.jobHeader}>
             <Icon name={j.icon} size={40} color={t.text3} />
             <View style={[s.badge, j.urgente ? s.badgeDanger : s.badgePrimary]}>
-              <Text style={[s.badgeTxt, { color: j.urgente ? '#FFFFFF' : t.onPrimary }]}>{j.badge}</Text>
+              <Text style={[s.badgeTxt, { color: j.urgente ? t.bg : t.onPrimary }]}>{j.badge}</Text>
             </View>
           </View>
           <View style={s.jobBody}>
@@ -153,15 +160,6 @@ export default function InicioScreen() {
               </Text>
               <Icon name="chevron" size={18} color={t.onPrimary} />
             </Pressable>
-            <View style={s.headerActions}>
-              <Pressable hitSlop={8}>
-                <Icon name="card" size={23} color={t.onPrimary} />
-              </Pressable>
-              <Pressable hitSlop={8}>
-                <Icon name="bell" size={22} color={t.onPrimary} />
-                <View style={s.bellDot} />
-              </Pressable>
-            </View>
           </View>
 
           {/* Buscador */}
@@ -197,7 +195,7 @@ export default function InicioScreen() {
           </Pressable>
         </View>
         <View style={s.mapCard}>
-          <MapaPedidos height={210} pedidos={pedidosDeZona(zona)} />
+          <MapaPedidos height={210} pedidos={pedidos} />
         </View>
 
         {/* ===== BANNER PROVEEDORES ===== */}
@@ -270,7 +268,7 @@ const styles = (t: Theme) =>
       width: 9,
       height: 9,
       borderRadius: 5,
-      backgroundColor: t.danger,
+      backgroundColor: t.onPrimary,
       borderWidth: 1.5,
       borderColor: t.primary,
     },
@@ -355,7 +353,7 @@ const styles = (t: Theme) =>
       paddingVertical: 4,
     },
     badgePrimary: { backgroundColor: t.primary },
-    badgeDanger: { backgroundColor: t.danger },
+    badgeDanger: { backgroundColor: t.text },
     badgeTxt: { fontSize: 11, fontWeight: '800' },
     jobBody: { padding: spacing.md },
     jobTitle: { color: t.text, fontSize: 15, fontWeight: '800' },

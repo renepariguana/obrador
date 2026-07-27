@@ -3,6 +3,7 @@
     "name": "Obrador",
     "slug": "manos-a-la-obra",
     "version": "1.0.0",
+    "scheme": "obrador",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
