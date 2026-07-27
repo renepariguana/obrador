@@ -8,6 +8,7 @@ import { FiltrosSheet, Filtros } from '../components/FiltrosSheet'
 import { useTheme, spacing, radius, Theme } from '../lib/theme'
 import { pedidosAbiertos, PedidoVista } from '../data/pedidosApi'
 import { useZona } from '../lib/zona'
+import { useMiUbicacion } from '../lib/ubicacion'
 
 const FILTROS = ['Todos', 'Mi rubro', 'Urgentes', 'Hoy']
 const { width } = Dimensions.get('window')
@@ -17,6 +18,7 @@ export default function TrabajosScreen() {
   const insets = useSafeAreaInsets()
   const s = styles(t)
   const { zona } = useZona()
+  const miUbic = useMiUbicacion()
   const navigation = useNavigation<any>()
   const [filtros, setFiltros] = useState<Filtros>({ zona: null, rubro: null, urgente: false })
   const [showFiltros, setShowFiltros] = useState(false)
@@ -59,7 +61,7 @@ export default function TrabajosScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: t.bg }}>
-      <MapaPedidos fill pedidos={PEDIDOS} selected={sel} onSelect={onMapSelect} />
+      <MapaPedidos fill pedidos={PEDIDOS} selected={sel} onSelect={onMapSelect} me={miUbic} />
 
       {/* ===== Overlays superiores ===== */}
       <View style={[s.top, { paddingTop: insets.top + 8 }]} pointerEvents="box-none">
@@ -69,7 +71,7 @@ export default function TrabajosScreen() {
             <Text style={s.searchPlaceholder}>¿Qué necesitás hacer?</Text>
           </Pressable>
           <Pressable style={[s.fbtn, hayFiltro && s.fbtnOn]} onPress={() => setShowFiltros(true)}>
-            <Icon name="filter" size={20} color={hayFiltro ? t.onPrimary : t.text} />
+            <Icon name="filter" size={20} color={hayFiltro ? t.surface : t.text} />
           </Pressable>
         </View>
 
@@ -215,7 +217,7 @@ const styles = (t: Theme) =>
       shadowOffset: { width: 0, height: 3 },
       elevation: 3,
     },
-    fbtnOn: { backgroundColor: t.primary },
+    fbtnOn: { backgroundColor: t.text },
     livePill: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -247,9 +249,9 @@ const styles = (t: Theme) =>
       shadowOffset: { width: 0, height: 2 },
       elevation: 2,
     },
-    chipOn: { backgroundColor: t.primary },
+    chipOn: { backgroundColor: t.text },
     chipTxt: { color: t.text2, fontWeight: '700', fontSize: 13 },
-    chipTxtOn: { color: t.onPrimary },
+    chipTxtOn: { color: t.surface },
     bottom: { position: 'absolute', left: 0, right: 0, bottom: 0 },
     detail: {
       backgroundColor: t.surface,

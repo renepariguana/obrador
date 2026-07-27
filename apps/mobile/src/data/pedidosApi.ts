@@ -92,6 +92,14 @@ function jitter(id: string): [number, number] {
   return [a * 0.012, b * 0.012]
 }
 
+// PRIVACIDAD: al profesional no se le revela la ubicación exacta del pedido ajeno.
+// Redondeamos las coordenadas a una grilla de ~100m (nivel manzana): se ve la cuadra
+// aproximada, no la casa. La dirección exacta se comparte recién cuando se comunican.
+const GRILLA = 0.001 // ≈ 100 m (una manzana)
+function aproximar(lat: number, lng: number): [number, number] {
+  return [Math.round(lat / GRILLA) * GRILLA, Math.round(lng / GRILLA) * GRILLA]
+}
+
 function haceDesde(iso: string): string {
   const min = Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 60000))
   if (min < 1) return 'recién'
@@ -122,8 +130,9 @@ export async function pedidosAbiertos(oficios?: string[]): Promise<PedidoVista[]
     .map((p) => {
       const [blat, blng] = CENTRO[p.zona || ''] || CENTRO_DEFAULT
       const [dlat, dlng] = jitter(p.id)
-      const lat = p.lat ?? blat + dlat
-      const lng = p.lng ?? blng + dlng
+      // Coords exactas → aproximadas (privacidad); sin coords → centroide de zona + jitter.
+      const [lat, lng] =
+        p.lat != null && p.lng != null ? aproximar(p.lat, p.lng) : [blat + dlat, blng + dlng]
       const primera = (p.descripcion || '').split('\n')[0].trim()
       return {
         id: p.id,
@@ -131,7 +140,7 @@ export async function pedidosAbiertos(oficios?: string[]): Promise<PedidoVista[]
         lat,
         lng,
         oficio: p.oficio,
-        desc: primera.length > 42 ? primera.slice(0, 40) + '…' : primera,
+        desc: primera.length > 50 ? primera.slice(0, 48) + '…' : primera,
         cliente: (p.cliente?.nombre || 'Cliente').split(' ')[0],
         zona: p.zona || 'Sin zona',
         tag: p.oficio,

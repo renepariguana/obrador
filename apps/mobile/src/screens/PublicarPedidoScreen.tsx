@@ -1,13 +1,16 @@
 import React, { useState } from 'react'
-import { View, Text, ScrollView, TextInput, Pressable, StyleSheet, Alert, ActivityIndicator } from 'react-native'
+import { View, Text, ScrollView, TextInput, Pressable, StyleSheet, Alert, ActivityIndicator, Modal } from 'react-native'
 import { useNavigation } from '@react-navigation/native'
+import * as Location from 'expo-location'
 import { AppHeader } from '../components/AppHeader'
 import { Icon } from '../components/Icon'
-import { ConfirmarUbicacion } from '../components/ConfirmarUbicacion'
+import { SelectorUbicacionMapa, Coord } from '../components/SelectorUbicacionMapa'
 import { useTheme, spacing, radius, Theme } from '../lib/theme'
 import { useZona } from '../lib/zona'
 import { useGate } from '../lib/gate'
 import { publicarPedido } from '../data/pedidosApi'
+
+const TUCUMAN: Coord = { lat: -26.8241, lng: -65.2226 }
 
 const RUBROS = [
   'Albañil',
@@ -25,7 +28,7 @@ const RUBROS = [
 export default function PublicarPedidoScreen() {
   const t = useTheme()
   const s = styles(t)
-  const { zona, setZona } = useZona()
+  const { zona } = useZona()
   const gate = useGate()
   const navigation = useNavigation<any>()
 
@@ -33,10 +36,40 @@ export default function PublicarPedidoScreen() {
   const [desc, setDesc] = useState('')
   const [urgente, setUrgente] = useState(false)
   const [presupuesto, setPresupuesto] = useState('')
-  const [showUbic, setShowUbic] = useState(false)
+  const [coord, setCoord] = useState<Coord | null>(null)
+  const [zonaTxt, setZonaTxt] = useState<string | null>(null)
+  const [initialCoord, setInitialCoord] = useState<Coord | null>(null)
+  const [showMapa, setShowMapa] = useState(false)
+  const [buscandoGPS, setBuscandoGPS] = useState(false)
   const [publicando, setPublicando] = useState(false)
 
-  const listo = rubro !== null && desc.trim().length >= 8
+  const listo = rubro !== null && desc.trim().length >= 8 && coord !== null
+
+  // Pide el GPS del dispositivo (preciso) como punto inicial y abre el mapa para ajustar.
+  const abrirMapa = async () => {
+    setBuscandoGPS(true)
+    let start: Coord = coord ?? TUCUMAN
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync()
+      if (status === 'granted') {
+        const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High })
+        start = { lat: pos.coords.latitude, lng: pos.coords.longitude }
+      }
+    } catch {}
+    setInitialCoord(start)
+    setShowMapa(true)
+    setBuscandoGPS(false)
+  }
+
+  const onConfirmMapa = async (c: Coord) => {
+    setCoord(c)
+    setShowMapa(false)
+    // Nombre legible de la zona (barrio/ciudad) para mostrar y guardar.
+    try {
+      const [r] = await Location.reverseGeocodeAsync({ latitude: c.lat, longitude: c.lng })
+      if (r) setZonaTxt([r.district, r.city || r.subregion].filter(Boolean).join(', ') || null)
+    } catch {}
+  }
 
   const publicar = () =>
     gate('publicar un pedido', async () => {
@@ -45,7 +78,13 @@ export default function PublicarPedidoScreen() {
         desc.trim() +
         (urgente ? '\n\n⚡ Urgente' : '') +
         (presupuesto.trim() ? `\n\nPresupuesto estimado: $${presupuesto.trim()}` : '')
-      const r = await publicarPedido({ oficio: rubro as string, descripcion, zona })
+      const r = await publicarPedido({
+        oficio: rubro as string,
+        descripcion,
+        zona: zonaTxt ?? zona,
+        lat: coord?.lat ?? null,
+        lng: coord?.lng ?? null,
+      })
       setPublicando(false)
       if (r.error) return Alert.alert('No se pudo publicar', r.error)
       Alert.alert('¡Listo!', 'Tu pedido se publicó. Lo vas a ver en "Mis pedidos".', [
@@ -92,12 +131,18 @@ export default function PublicarPedidoScreen() {
           textAlignVertical="top"
         />
 
-        {/* Ubicación */}
-        <Text style={s.label}>¿Dónde?</Text>
-        <Pressable style={s.row} onPress={() => setShowUbic(true)}>
-          <Icon name="pin" size={20} color={t.text2} />
-          <Text style={s.rowText}>{zona}</Text>
-          <Icon name="chevron" size={18} color={t.text3} />
+        {/* Ubicación exacta (GPS + ajuste en el mapa) */}
+        <Text style={s.label}>¿Dónde es el trabajo?</Text>
+        <Pressable style={s.row} onPress={abrirMapa} disabled={buscandoGPS}>
+          <Icon name="pin" size={20} color={coord ? t.primary : t.text2} />
+          <Text style={[s.rowText, !coord && { color: t.text3 }]} numberOfLines={1}>
+            {buscandoGPS
+              ? 'Buscando tu ubicación…'
+              : coord
+                ? zonaTxt || 'Ubicación fijada en el mapa'
+                : 'Fijar en el mapa'}
+          </Text>
+          {buscandoGPS ? <ActivityIndicator color={t.text3} /> : <Icon name="chevron" size={18} color={t.text3} />}
         </Pressable>
 
         {/* Urgente */}
@@ -137,16 +182,14 @@ export default function PublicarPedidoScreen() {
             <Text style={[s.publicarTxt, !listo && s.publicarTxtOff]}>Publicar pedido</Text>
           )}
         </Pressable>
-        {!listo && <Text style={s.hint}>Elegí un rubro y contanos un poco el trabajo.</Text>}
+        {!listo && <Text style={s.hint}>Elegí un rubro, contá el trabajo y fijá la ubicación.</Text>}
       </ScrollView>
 
-      <ConfirmarUbicacion
-        visible={showUbic}
-        onConfirm={(z) => {
-          if (z) setZona(z)
-          setShowUbic(false)
-        }}
-      />
+      <Modal visible={showMapa} animationType="slide" onRequestClose={() => setShowMapa(false)}>
+        {initialCoord && (
+          <SelectorUbicacionMapa initial={initialCoord} onConfirm={onConfirmMapa} onCancel={() => setShowMapa(false)} />
+        )}
+      </Modal>
     </View>
   )
 }
@@ -158,9 +201,9 @@ const styles = (t: Theme) =>
     label: { color: t.text, fontSize: 15, fontWeight: '800', marginTop: spacing.lg, marginBottom: spacing.sm },
     wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
     chip: { backgroundColor: t.surface, borderWidth: 1, borderColor: t.border, borderRadius: radius.pill, paddingHorizontal: spacing.md, paddingVertical: 9 },
-    chipOn: { backgroundColor: t.primary, borderColor: t.primary },
+    chipOn: { backgroundColor: t.text, borderColor: t.text },
     chipTxt: { color: t.text2, fontWeight: '700', fontSize: 13 },
-    chipTxtOn: { color: t.onPrimary },
+    chipTxtOn: { color: t.surface },
     chipDanger: { backgroundColor: t.text, borderColor: t.text },
     chipDangerTxt: { color: t.bg },
     textarea: {

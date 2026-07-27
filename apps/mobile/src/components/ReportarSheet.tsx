@@ -86,7 +86,7 @@ const styles = (t: Theme) =>
       paddingVertical: 14,
       marginBottom: spacing.sm,
     },
-    optOn: { borderColor: t.primary, backgroundColor: t.surface2 },
+    optOn: { borderColor: t.text, backgroundColor: t.surface2 },
     optTxt: { color: t.text, fontSize: 15, fontWeight: '700' },
     optTxtOn: { color: t.text, fontWeight: '900' },
     btn: { height: 52, borderRadius: radius.md, backgroundColor: t.primary, alignItems: 'center', justifyContent: 'center', marginTop: spacing.sm },

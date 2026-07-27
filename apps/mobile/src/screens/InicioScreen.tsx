@@ -9,6 +9,7 @@ import { useTheme, spacing, radius, Theme } from '../lib/theme'
 import { cercaDe, Profesional } from '../data/profesionales'
 import { pedidosAbiertos, PedidoVista } from '../data/pedidosApi'
 import { useZona } from '../lib/zona'
+import { useMiUbicacion } from '../lib/ubicacion'
 
 type Oficio = { label: string; icon: IconName }
 const OFICIOS: Oficio[] = [
@@ -66,6 +67,7 @@ export default function InicioScreen() {
   const s = styles(t)
   const navigation = useNavigation<any>()
   const { zona, setZona } = useZona()
+  const miUbic = useMiUbicacion()
   const [showUbic, setShowUbic] = useState(false)
   const [pedidos, setPedidos] = useState<PedidoVista[]>([])
 
@@ -195,7 +197,7 @@ export default function InicioScreen() {
           </Pressable>
         </View>
         <View style={s.mapCard}>
-          <MapaPedidos height={210} pedidos={pedidos} />
+          <MapaPedidos height={210} pedidos={pedidos} me={miUbic} />
         </View>
 
         {/* ===== BANNER PROVEEDORES ===== */}
