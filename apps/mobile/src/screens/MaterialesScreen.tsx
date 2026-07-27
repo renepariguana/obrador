@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
-import { View, Text, ScrollView, TextInput, Pressable, ActivityIndicator, StyleSheet, Dimensions, Linking, Image, Alert } from 'react-native'
+import { View, Text, ScrollView, TextInput, Pressable, ActivityIndicator, StyleSheet, Dimensions, Linking, Image } from 'react-native'
+import { useNavigation } from '@react-navigation/native'
 
 const CARD_W = (Dimensions.get('window').width - 40) / 2 // 2 cards a lo ancho (padding 32 + gap 8)
 import { AppHeader } from '../components/AppHeader'
@@ -25,6 +26,7 @@ const PROV_DEFAULT = 'Tucumán' // provincia inicial; el selector la cambia si h
 export default function MaterialesScreen() {
   const t = useTheme()
   const s = styles(t)
+  const navigation = useNavigation<any>()
   useZona()
   const [taxo, setTaxo] = useState<CatApp[]>([])
   const [catIdx, setCatIdx] = useState<number | null>(null)
@@ -88,8 +90,9 @@ export default function MaterialesScreen() {
       <AppHeader
         title="Materiales"
         right={
-          <Pressable hitSlop={8} onPress={() => Alert.alert('Presupuestador', 'Pronto vas a poder armar presupuestos con estos materiales.')}>
-            <Icon name="file" size={23} color={t.onPrimary} />
+          <Pressable hitSlop={8} onPress={() => navigation.navigate('Proveedores')} style={s.verMapa}>
+            <Icon name="pin" size={19} color={t.onPrimary} />
+            <Text style={s.verMapaTxt}>Mapa</Text>
           </Pressable>
         }
       />
@@ -269,6 +272,8 @@ const styles = (t: Theme) =>
       marginTop: spacing.md,
     },
     searchInput: { flex: 1, color: t.text, fontSize: 15, padding: 0 },
+    verMapa: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+    verMapaTxt: { color: t.onPrimary, fontWeight: '800', fontSize: 14 },
     provinChips: { gap: spacing.sm, paddingHorizontal: spacing.lg, paddingTop: spacing.md, paddingBottom: 2 },
     provinChip: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: t.surface, borderWidth: 1, borderColor: t.border, borderRadius: radius.pill, paddingHorizontal: spacing.md, paddingVertical: 8 },
     provinChipOn: { backgroundColor: t.primary, borderColor: t.primary },

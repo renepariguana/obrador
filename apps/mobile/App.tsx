@@ -40,6 +40,16 @@ function InicioStack() {
   )
 }
 
+function MaterialesStack() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="MaterialesHome" component={MaterialesScreen} />
+      <Stack.Screen name="Proveedores" component={ProveedoresScreen} />
+      <Stack.Screen name="ProveedorCatalogo" component={ProveedorCatalogoScreen} />
+    </Stack.Navigator>
+  )
+}
+
 function TrabajosStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
@@ -70,7 +80,7 @@ function MiPerfilStack() {
 
 const TABS: { name: string; comp: React.ComponentType; icon: IconName; iconOn?: IconName }[] = [
   { name: 'Inicio', comp: InicioStack, icon: 'home', iconOn: 'homeFill' },
-  { name: 'Materiales', comp: MaterialesScreen, icon: 'container', iconOn: 'containerFill' },
+  { name: 'Materiales', comp: MaterialesStack, icon: 'container', iconOn: 'containerFill' },
   { name: 'Trabajos', comp: TrabajosStack, icon: 'obrador', iconOn: 'obrador' },
   { name: 'Pedidos', comp: PedidosStack, icon: 'chat', iconOn: 'chatFill' },
   { name: 'Mi perfil', comp: MiPerfilStack, icon: 'user', iconOn: 'userFill' },
