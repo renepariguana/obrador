@@ -14,7 +14,9 @@ import ProfesionalScreen from './src/screens/ProfesionalScreen'
 import MaterialesScreen from './src/screens/MaterialesScreen'
 import TrabajosScreen from './src/screens/TrabajosScreen'
 import DetallePedidoScreen from './src/screens/DetallePedidoScreen'
-import PedidosScreen from './src/screens/PedidosScreen'
+import PublicarPedidoScreen from './src/screens/PublicarPedidoScreen'
+import MisPedidosScreen from './src/screens/MisPedidosScreen'
+import PresupuestadorScreen from './src/screens/PresupuestadorScreen'
 import MiPerfilScreen from './src/screens/MiPerfilScreen'
 import BloqueadosScreen from './src/screens/BloqueadosScreen'
 import MisPostulacionesScreen from './src/screens/MisPostulacionesScreen'
@@ -55,15 +57,8 @@ function TrabajosStack() {
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="TrabajosHome" component={TrabajosScreen} />
       <Stack.Screen name="DetallePedido" component={DetallePedidoScreen} />
-    </Stack.Navigator>
-  )
-}
-
-function PedidosStack() {
-  return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="PedidosHome" component={PedidosScreen} />
-      <Stack.Screen name="DetallePedido" component={DetallePedidoScreen} />
+      <Stack.Screen name="PublicarPedido" component={PublicarPedidoScreen} />
+      <Stack.Screen name="MisPedidos" component={MisPedidosScreen} />
     </Stack.Navigator>
   )
 }
@@ -74,6 +69,9 @@ function MiPerfilStack() {
       <Stack.Screen name="MiPerfilHome" component={MiPerfilScreen} />
       <Stack.Screen name="Bloqueados" component={BloqueadosScreen} />
       <Stack.Screen name="MisPostulaciones" component={MisPostulacionesScreen} />
+      <Stack.Screen name="MisPedidos" component={MisPedidosScreen} />
+      <Stack.Screen name="PublicarPedido" component={PublicarPedidoScreen} />
+      <Stack.Screen name="DetallePedido" component={DetallePedidoScreen} />
     </Stack.Navigator>
   )
 }
@@ -82,7 +80,7 @@ const TABS: { name: string; comp: React.ComponentType; icon: IconName; iconOn?: 
   { name: 'Inicio', comp: InicioStack, icon: 'home', iconOn: 'homeFill' },
   { name: 'Materiales', comp: MaterialesStack, icon: 'container', iconOn: 'containerFill' },
   { name: 'Trabajos', comp: TrabajosStack, icon: 'obrador', iconOn: 'obrador' },
-  { name: 'Pedidos', comp: PedidosStack, icon: 'chat', iconOn: 'chatFill' },
+  { name: 'Presupuestador', comp: PresupuestadorScreen, icon: 'chat', iconOn: 'chatFill' },
   { name: 'Mi perfil', comp: MiPerfilStack, icon: 'user', iconOn: 'userFill' },
 ]
 

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react'
-import { View, Text, TextInput, Pressable, ScrollView, StyleSheet, Dimensions } from 'react-native'
+import { View, Text, Pressable, ScrollView, StyleSheet, Dimensions } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useNavigation, useFocusEffect } from '@react-navigation/native'
 import { MapaPedidos } from '../components/MapaPedidos'
@@ -64,14 +64,10 @@ export default function TrabajosScreen() {
       {/* ===== Overlays superiores ===== */}
       <View style={[s.top, { paddingTop: insets.top + 8 }]} pointerEvents="box-none">
         <View style={s.searchRow}>
-          <View style={s.search}>
-            <Icon name="search" size={20} color={t.text3} />
-            <TextInput
-              style={s.searchInput}
-              placeholder="¿Qué necesitás hacer?"
-              placeholderTextColor={t.text3}
-            />
-          </View>
+          <Pressable style={s.search} onPress={() => navigation.navigate('PublicarPedido')}>
+            <Icon name="plus" size={20} color={t.text} />
+            <Text style={s.searchPlaceholder}>¿Qué necesitás hacer?</Text>
+          </Pressable>
           <Pressable style={[s.fbtn, hayFiltro && s.fbtnOn]} onPress={() => setShowFiltros(true)}>
             <Icon name="filter" size={20} color={hayFiltro ? t.onPrimary : t.text} />
           </Pressable>
@@ -205,7 +201,7 @@ const styles = (t: Theme) =>
       shadowOffset: { width: 0, height: 3 },
       elevation: 3,
     },
-    searchInput: { flex: 1, color: t.text, fontSize: 15, padding: 0 },
+    searchPlaceholder: { flex: 1, color: t.text3, fontSize: 15, fontWeight: '600' },
     fbtn: {
       width: 48,
       height: 48,

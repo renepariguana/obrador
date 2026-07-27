@@ -175,7 +175,7 @@ export default function MiPerfilScreen() {
         {/* Actividad */}
         <Text style={s.section}>Actividad</Text>
         <View style={s.group}>
-          <Row icon="chat" label="Mis pedidos" onPress={() => navigation.navigate('Pedidos')} />
+          <Row icon="chat" label="Mis pedidos" onPress={() => navigation.navigate('MisPedidos')} />
           <Row icon="hand" label="Mis postulaciones" onPress={() => navigation.navigate('MisPostulaciones')} />
         </View>
 
