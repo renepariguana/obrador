@@ -12,15 +12,17 @@ const CENTER = { lat: -26.8241, lng: -65.2226 }
 
 type Marker = { lat: number; lng: number; nombre: string; rubro: string }
 
-const html = (key: string, markers: Marker[]) => `<!DOCTYPE html>
+const html = (key: string, markers: Marker[], me: { lat: number; lng: number } | null) => `<!DOCTYPE html>
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <style>
   html,body,#map{height:100%;margin:0;padding:0;background:#EEF0F3;}
   /* punto chico por defecto */
-  .dot{width:14px;height:14px;border-radius:50%;background:#FFBF00;border:2px solid #fff;
+  .dot{width:14px;height:14px;border-radius:50%;background:#1A1A1A;border:2px solid #fff;
     box-shadow:0 1px 4px rgba(0,0,0,.35);cursor:pointer;transform:translateY(-1px);}
+  /* tu ubicación */
+  .me{width:16px;height:16px;border-radius:50%;background:#2E7DF7;border:3px solid #fff;box-shadow:0 0 0 4px rgba(46,125,247,.22);}
   /* burbuja al seleccionar */
   .bubble{display:flex;align-items:center;gap:7px;background:#FFBF00;padding:7px 11px;border-radius:16px;
     box-shadow:0 4px 12px rgba(0,0,0,.28);white-space:nowrap;position:relative;transform:translateY(-10px);cursor:pointer;z-index:9999;}
@@ -34,6 +36,7 @@ const html = (key: string, markers: Marker[]) => `<!DOCTYPE html>
 <script>
   const PROV = ${JSON.stringify(markers)};
   const CENTER = ${JSON.stringify(CENTER)};
+  const ME = ${me ? JSON.stringify(me) : 'null'};
   var markers = [], sel = -1, map;
   function post(msg){ if (window.ReactNativeWebView) window.ReactNativeWebView.postMessage(JSON.stringify(msg)); }
 
@@ -78,9 +81,14 @@ const html = (key: string, markers: Marker[]) => `<!DOCTYPE html>
       var m = new google.maps.marker.AdvancedMarkerElement({ position: { lat: p.lat, lng: p.lng }, content: el });
       return { marker: m, el: el, min: minZoom(idx) };
     });
+    if (ME) {
+      var meEl = document.createElement('div'); meEl.className = 'me';
+      new google.maps.marker.AdvancedMarkerElement({ map: map, position: ME, content: meEl });
+    }
     if (PROV.length){
       var b = new google.maps.LatLngBounds();
       PROV.forEach(function(p){ b.extend({ lat: p.lat, lng: p.lng }); });
+      if (ME) b.extend(ME);
       map.fitBounds(b, 48);
     }
     map.addListener('zoom_changed', refresh);
@@ -95,10 +103,12 @@ export function MapaProveedores({
   proveedores,
   selected,
   onSelect,
+  me = null,
 }: {
   proveedores: GuiaProveedor[]
   selected?: number | null
   onSelect?: (i: number) => void
+  me?: { lat: number; lng: number } | null
 }) {
   const t = useTheme()
   const ref = useRef<WebView>(null)
@@ -132,10 +142,10 @@ export function MapaProveedores({
     <View style={styles.fill}>
       <WebView
         // key fuerza recarga del html cuando cambia el set de pines (filtro por rubro)
-        key={`${markers.length}-${markers[0]?.nombre ?? ''}`}
+        key={`${markers.length}-${markers[0]?.nombre ?? ''}-${me ? '1' : '0'}`}
         ref={ref}
         originWhitelist={['*']}
-        source={{ html: html(GOOGLE_KEY, markers) }}
+        source={{ html: html(GOOGLE_KEY, markers, me) }}
         style={styles.web}
         scrollEnabled={false}
         showsVerticalScrollIndicator={false}

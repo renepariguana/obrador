@@ -8,6 +8,7 @@ import { MapaProveedores } from '../components/MapaProveedores'
 import { GUIA, RUBROS, GuiaProveedor } from '../data/guiaProveedores'
 import { slugScrapeado, sentenceCase } from '../data/materialesApi'
 import { useTheme, spacing, radius, Theme } from '../lib/theme'
+import { useMiUbicacion } from '../lib/ubicacion'
 
 const TODOS = 'Todos'
 
@@ -37,6 +38,7 @@ export default function ProveedoresScreen() {
   const s = styles(t)
   const insets = useSafeAreaInsets()
   const navigation = useNavigation<any>()
+  const miUbic = useMiUbicacion()
 
   const [rubro, setRubro] = useState<string>(TODOS)
   const [q, setQ] = useState('')
@@ -152,7 +154,7 @@ export default function ProveedoresScreen() {
 
       {/* Mapa */}
       <View style={s.mapa}>
-        <MapaProveedores proveedores={lista} selected={sel} onSelect={setSel} />
+        <MapaProveedores proveedores={lista} selected={sel} onSelect={setSel} me={miUbic} />
       </View>
 
       {/* Ficha del proveedor seleccionado */}

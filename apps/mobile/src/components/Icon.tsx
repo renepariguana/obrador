@@ -45,6 +45,7 @@ const ICONS: Record<string, () => React.ReactNode> = {
   locate: () => <><Circle cx={12} cy={12} r={6.5} />{p('M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3')}<Circle cx={12} cy={12} r={1.6} fill="currentColor" stroke="none" /></>,
   clock: () => <><Circle cx={12} cy={12} r={8.5} />{p('M12 7.5V12l3 2')}</>,
   lock: () => <><Rect x={3} y={11} width={18} height={11} rx={2} />{p('M7 11V7a5 5 0 0 1 10 0v4')}</>,
+  truck: () => <><Path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2" />{p('M15 18H9')}{p('M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14')}<Circle cx={17} cy={18} r={2} /><Circle cx={7} cy={18} r={2} /></>,
   chat: () => <>{p('M20 4H4a1 1 0 0 0-1 1v11a1 1 0 0 0 1 1h3v4l4-4h9a1 1 0 0 0 1-1V5a1 1 0 0 0-1-1z')}{p('M7.5 8.7h9')}{p('M7.5 12.2h5.5')}</>,
   chatFill: () => <Path fillRule="evenodd" fill="currentColor" stroke="none" d="M20 4H4a1 1 0 0 0-1 1v11a1 1 0 0 0 1 1h3v4l4-4h9a1 1 0 0 0 1-1V5a1 1 0 0 0-1-1z M8.5 7.9H16.1a0.9 0.9 0 0 1 0 1.8H8.5a0.9 0.9 0 0 1 0-1.8z M8.5 11.3H12.6a0.9 0.9 0 0 1 0 1.8H8.5a0.9 0.9 0 0 1 0-1.8z" />,
   phone: () => <>{p('M6.5 3.5 9 4l1 4-2 1.5a11 11 0 0 0 5 5l1.5-2 4 1 .5 2.5a2 2 0 0 1-2 2.3A16 16 0 0 1 4.2 5.5a2 2 0 0 1 2.3-2z')}</>,

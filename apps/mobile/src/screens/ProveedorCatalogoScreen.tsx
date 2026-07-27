@@ -1,12 +1,11 @@
 import React, { useEffect, useState } from 'react'
-import { View, Text, ScrollView, TextInput, Pressable, ActivityIndicator, StyleSheet, Dimensions } from 'react-native'
+import { View, Text, ScrollView, TextInput, Pressable, ActivityIndicator, StyleSheet, Image, Linking } from 'react-native'
 import { useRoute, useNavigation } from '@react-navigation/native'
 import { AppHeader } from '../components/AppHeader'
 import { Icon } from '../components/Icon'
 import { useTheme, spacing, radius, Theme } from '../lib/theme'
 import { Material, CatApp, getTaxonomiaProveedor, getMaterialesProveedor, precioAr, precioBaseAr, sentenceCase } from '../data/materialesApi'
 
-const CARD_W = (Dimensions.get('window').width - 40) / 2
 const PROVINCIA = 'Tucumán'
 
 // Catálogo de UN proveedor del mapa (Easy, EMI, Maderplak…): sus productos tal cual, por categoría/subcategoría nativas.
@@ -69,7 +68,12 @@ export default function ProveedorCatalogoScreen() {
             </Text>
           </Pressable>
         }
-        right={<Icon name="cart" size={23} color={t.onPrimary} />}
+        right={
+          <Pressable hitSlop={8} onPress={() => navigation.navigate('Proveedores')} style={s.verMapa}>
+            <Icon name="pin" size={19} color={t.onPrimary} />
+            <Text style={s.verMapaTxt}>Mapa</Text>
+          </Pressable>
+        }
       />
 
       <View style={s.search}>
@@ -138,19 +142,38 @@ export default function ProveedorCatalogoScreen() {
               {grupos.map((g) => (
                 <View key={g.sub} style={s.seccion}>
                   <Text style={s.grupoTitulo}>{sentenceCase(g.sub)}</Text>
-                  <View style={s.grid}>
-                    {g.items.map((m) => (
-                      <View key={m.id} style={s.optBox}>
+                  {g.items.map((m) => (
+                    <Pressable
+                      key={m.id}
+                      style={s.itemCard}
+                      onPress={() => m.url && Linking.openURL(m.url)}
+                      disabled={!m.url}
+                    >
+                      {m.imagen ? (
+                        <Image source={{ uri: m.imagen }} style={s.thumb} resizeMode="contain" />
+                      ) : (
+                        <View style={[s.thumb, s.thumbVacio]}>
+                          <Icon name="box" size={22} color={t.text3} />
+                        </View>
+                      )}
+                      <View style={{ flex: 1 }}>
                         <Text style={s.nombre} numberOfLines={2}>
                           {m.nombre}
                         </Text>
-                        <View style={{ marginTop: 'auto' }}>
-                          <Text style={s.precio}>{precioAr(m.precio)}</Text>
-                          <Text style={s.unidad}>{m.unidadBase !== 'u' ? precioBaseAr(m) : 'por unidad'}</Text>
-                        </View>
+                        {m.marca ? <Text style={s.marca}>{m.marca}</Text> : null}
                       </View>
-                    ))}
-                  </View>
+                      <View style={s.precioBox}>
+                        {m.precio > 0 ? (
+                          <>
+                            <Text style={s.precio}>{precioAr(m.precio)}</Text>
+                            <Text style={s.unidad}>{m.unidadBase !== 'u' ? precioBaseAr(m) : 'por unidad'}</Text>
+                          </>
+                        ) : (
+                          <Text style={s.consultar}>Consultar{'\n'}precio</Text>
+                        )}
+                      </View>
+                    </Pressable>
+                  ))}
                 </View>
               ))}
             </ScrollView>
@@ -165,6 +188,8 @@ const styles = (t: Theme) =>
   StyleSheet.create({
     headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 },
     headerTitle: { color: t.onPrimary, fontSize: 20, fontWeight: '900', letterSpacing: -0.4, flexShrink: 1 },
+    verMapa: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+    verMapaTxt: { color: t.onPrimary, fontWeight: '800', fontSize: 14 },
     search: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -193,18 +218,22 @@ const styles = (t: Theme) =>
     vacio: { color: t.text2, fontSize: 14, textAlign: 'center', lineHeight: 20 },
     seccion: { gap: spacing.sm },
     grupoTitulo: { fontSize: 15, fontWeight: '900', color: t.text, marginTop: spacing.sm },
-    grid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
-    optBox: {
-      width: CARD_W,
-      minHeight: 130,
-      gap: 6,
+    itemCard: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.md,
       backgroundColor: t.surface,
       borderRadius: radius.lg,
       borderWidth: 1,
       borderColor: t.border,
       padding: spacing.md,
     },
-    nombre: { color: t.text, fontSize: 14, fontWeight: '700', lineHeight: 19 },
+    thumb: { width: 54, height: 54, borderRadius: radius.sm, backgroundColor: '#FFFFFF' },
+    thumbVacio: { alignItems: 'center', justifyContent: 'center', backgroundColor: t.surface2 },
+    nombre: { color: t.text, fontSize: 13, fontWeight: '700', lineHeight: 17 },
+    marca: { color: t.text3, fontSize: 11, marginTop: 4 },
+    precioBox: { alignItems: 'flex-end', gap: 2 },
     precio: { color: t.text, fontSize: 19, fontWeight: '900' },
     unidad: { color: t.text3, fontSize: 11 },
+    consultar: { color: t.text2, fontSize: 12, fontWeight: '800', textAlign: 'right', lineHeight: 15 },
   })

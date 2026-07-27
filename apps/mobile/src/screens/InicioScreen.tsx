@@ -1,5 +1,5 @@
-import React, { useState, useCallback } from 'react'
-import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native'
+import React, { useState, useCallback, useEffect } from 'react'
+import { View, Text, ScrollView, Pressable, StyleSheet, Image } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useNavigation, useFocusEffect } from '@react-navigation/native'
 import { MapaPedidos } from '../components/MapaPedidos'
@@ -8,6 +8,7 @@ import { Icon, IconName } from '../components/Icon'
 import { useTheme, spacing, radius, Theme } from '../lib/theme'
 import { cercaDe, Profesional } from '../data/profesionales'
 import { pedidosAbiertos, PedidoVista } from '../data/pedidosApi'
+import { getProveedores } from '../data/materialesApi'
 import { useZona } from '../lib/zona'
 import { useMiUbicacion } from '../lib/ubicacion'
 
@@ -70,12 +71,17 @@ export default function InicioScreen() {
   const miUbic = useMiUbicacion()
   const [showUbic, setShowUbic] = useState(false)
   const [pedidos, setPedidos] = useState<PedidoVista[]>([])
+  const [provs, setProvs] = useState<{ nombre: string; slug: string; logo: string | null }[]>([])
 
   useFocusEffect(
     useCallback(() => {
       pedidosAbiertos().then(setPedidos)
     }, [])
   )
+
+  useEffect(() => {
+    getProveedores('Tucumán').then(setProvs)
+  }, [])
 
   const SectionHeader = ({ title, action = 'Ver todos' }: { title: string; action?: string }) => (
     <View style={s.sectionRow}>
@@ -130,7 +136,7 @@ export default function InicioScreen() {
             </View>
             {p.verificado && (
               <View style={s.verif}>
-                <Icon name="check" size={11} color={t.onPrimary} />
+                <Icon name="check" size={11} color={t.surface} />
               </View>
             )}
           </View>
@@ -199,7 +205,7 @@ export default function InicioScreen() {
         {/* ===== BANNER PROVEEDORES ===== */}
         <Pressable style={s.provBanner} onPress={() => navigation.navigate('Proveedores')}>
           <View style={s.provIcon}>
-            <Icon name="store" size={24} color={t.onPrimary} />
+            <Icon name="truck" size={24} color={t.surface} />
           </View>
           <View style={{ flex: 1 }}>
             <Text style={s.provTitle}>Proveedores en el mapa</Text>
@@ -207,6 +213,33 @@ export default function InicioScreen() {
           </View>
           <Icon name="chevron" size={22} color={t.text3} />
         </Pressable>
+
+        {/* ===== PROVEEDORES ===== */}
+        {provs.length > 0 && (
+          <>
+            <Text style={s.section}>Proveedores</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.strip}>
+              {provs.map((p) => (
+                <Pressable
+                  key={p.slug}
+                  style={s.cat}
+                  onPress={() => navigation.navigate('ProveedorCatalogo', { slug: p.slug, nombre: p.nombre })}
+                >
+                  <View style={s.provLogoBox}>
+                    {p.logo ? (
+                      <Image source={{ uri: p.logo }} style={s.provImg} resizeMode="contain" />
+                    ) : (
+                      <Text style={s.provInicial}>{(p.nombre || '?').charAt(0).toUpperCase()}</Text>
+                    )}
+                  </View>
+                  <Text style={s.catLabel} numberOfLines={1}>
+                    {p.nombre}
+                  </Text>
+                </Pressable>
+              ))}
+            </ScrollView>
+          </>
+        )}
 
         {/* ===== OFICIOS ===== */}
         <Text style={s.section}>Oficios</Text>
@@ -316,7 +349,7 @@ const styles = (t: Theme) =>
       width: 46,
       height: 46,
       borderRadius: radius.md,
-      backgroundColor: t.primary,
+      backgroundColor: t.text,
       alignItems: 'center',
       justifyContent: 'center',
     },
@@ -371,6 +404,19 @@ const styles = (t: Theme) =>
       justifyContent: 'center',
     },
     catLabel: { color: t.text2, fontSize: 11, fontWeight: '600' },
+    provLogoBox: {
+      width: 64,
+      height: 64,
+      borderRadius: 18,
+      backgroundColor: '#FFFFFF',
+      borderWidth: 1,
+      borderColor: t.border,
+      alignItems: 'center',
+      justifyContent: 'center',
+      overflow: 'hidden',
+    },
+    provImg: { width: 48, height: 48 },
+    provInicial: { color: t.text2, fontSize: 26, fontWeight: '900' },
     proCard: {
       width: 128,
       backgroundColor: t.surface,
@@ -396,7 +442,7 @@ const styles = (t: Theme) =>
       width: 20,
       height: 20,
       borderRadius: 10,
-      backgroundColor: t.primary,
+      backgroundColor: t.text,
       borderWidth: 2,
       borderColor: t.surface,
       alignItems: 'center',
