@@ -46,7 +46,8 @@ async function scrapeEasy() {
       const umTxt = um && um !== 'un' ? ` · UM: ${mult || 1} ${um}` : '';
       const descripcion = (specs + umTxt).trim();
       const marca = p.brand || '';
-      if (nombre && precio) rows.push([cat, sub, nombre, '$' + precio, link, descripcion, marca, sku]);
+      const img = p.items?.[0]?.images?.[0]?.imageUrl || '';
+      if (nombre && precio) rows.push([cat, sub, nombre, '$' + precio, link, descripcion, marca, sku, img]);
     });
 
     process.stdout.write(`  ${rows.length} productos\r`);

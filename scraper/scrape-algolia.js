@@ -72,7 +72,8 @@ async function scrapeAlgolia(baseURL, slug) {
       const url = h.url || `${base}/catalog/product/view/id/${h.objectID}`
       const marca = h.brand || h.manufacturer || ''
       const precioTxt = precioObj.default_formated || '$' + precio
-      rows.push([cat, sub, h.name || '', precioTxt, url, '', marca, h.sku || String(h.objectID || '')])
+      const img = h.image_url || h.thumbnail_url || h.image || h.small_image || ''
+      rows.push([cat, sub, h.name || '', precioTxt, url, '', marca, h.sku || String(h.objectID || ''), img])
     }
     page++
   } while (page < nbPages)

@@ -235,6 +235,23 @@ async function main() {
     console.log('\n▶ Actualizando el Sheet…'); execSync('node revisar.js', { cwd: __dirname, stdio: 'inherit' })
   }
   console.log(`\n✅ Día: ${nuevos.length} proveedor(es) nuevo(s) scrapeado(s). Pendientes con web restantes: ${Math.max(0, pend.length - batch.length)}.`)
+
+  // Scrapea el logo de los proveedores nuevos (solo los que aún no tienen) → Sheet MARCA + logo_url.
+  try {
+    const { scrapeLogos } = require('./scrape-logos')
+    await scrapeLogos()
+  } catch (e) {
+    console.error('  ⚠️ no pude scrapear logos:', e.message)
+  }
+
+  // Sincroniza qué proveedores se muestran en la app (columna MOSTRAR APP → proveedores.visible_app)
+  // y empuja los logos de la columna MARCA a proveedores.logo_url.
+  try {
+    const { syncVisibles } = require('./sync-visibles')
+    await syncVisibles()
+  } catch (e) {
+    console.error('  ⚠️ no pude sincronizar visibilidad:', e.message)
+  }
 }
 
 main().catch((e) => { console.error('❌', e.message); process.exit(1) })

@@ -31,9 +31,22 @@ async function endpoint(base) {
   throw new Error('sin Store API de WooCommerce')
 }
 
+// WooCommerce devuelve nombres con entidades HTML (&#8211; = –, &#215; = ×, &amp; = &…).
+// Las decodificamos para que el nombre quede limpio en el Sheet y en Supabase.
+function decodeEntities(s) {
+  if (!s) return s
+  return String(s)
+    .replace(/&#(\d+);/g, (_, n) => { try { return String.fromCodePoint(+n) } catch (e) { return _ } })
+    .replace(/&#x([0-9a-fA-F]+);/g, (_, h) => { try { return String.fromCodePoint(parseInt(h, 16)) } catch (e) { return _ } })
+    .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&nbsp;/g, ' ')
+    .replace(/&apos;/g, "'").replace(/&amp;/g, '&')
+}
+
 function catSub(categories) {
-  const names = (categories || []).map((c) => c.name).filter(Boolean)
-  return { sub: names[names.length - 1] || '', cat: names[names.length - 2] || '' }
+  const names = (categories || []).map((c) => decodeEntities(c.name)).filter(Boolean)
+  // 1 sola categoría → es la principal (no la sub), si no quedaría sin categoría y no aparece en la app.
+  if (names.length <= 1) return { cat: names[0] || '', sub: '' }
+  return { sub: names[names.length - 1], cat: names[names.length - 2] }
 }
 
 async function scrapeWoo(baseURL, slug) {
@@ -50,10 +63,12 @@ async function scrapeWoo(baseURL, slug) {
     for (const p of r.body) {
       const pr = p.prices || {}
       const minor = Number(pr.currency_minor_unit ?? 2)
-      const precio = pr.price != null && pr.price !== '' ? Number(pr.price) / Math.pow(10, minor) : 0
-      if (!(precio > 0) || p.is_in_stock === false) continue // sin precio o sin stock → saltear
+      let precio = pr.price != null && pr.price !== '' ? Number(pr.price) / Math.pow(10, minor) : 0
+      if (precio <= 1) precio = 0 // $1/$0 = placeholder de "consultar" (ej. premoldeados que cotizan)
+      if (p.is_in_stock === false) continue // sin stock → saltear (los SIN precio sí entran, con precio 0 = "consultar")
       const { cat, sub } = catSub(p.categories)
-      rows.push([cat, sub, p.name || '', '$' + precio, p.permalink || `${base}/?p=${p.id}`, '', '', p.sku || String(p.id || '')])
+      const img = Array.isArray(p.images) && p.images[0] ? p.images[0].src || '' : ''
+      rows.push([cat, sub, decodeEntities(p.name || ''), '$' + precio, p.permalink || `${base}/?p=${p.id}`, '', '', p.sku || String(p.id || ''), img])
     }
     process.stdout.write(`  ${rows.length} productos\r`)
     page++

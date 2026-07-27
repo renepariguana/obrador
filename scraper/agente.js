@@ -10,7 +10,13 @@ const { getValues } = require('./gsheets')
 
 const PRES = __dirname // scrapers locales (Obrador autocontenido)
 // Scrapers a medida por slug (para sitios que no son VTEX o necesitan lógica propia).
-const MODULOS = { easy: 'node scrape-easy.js', emi: 'node scrape-emi.js', maderplak: 'node scrape-maderplak.js' }
+const MODULOS = {
+  easy: 'node scrape-easy.js',
+  emi: 'node scrape-emi.js',
+  maderplak: 'node scrape-maderplak.js',
+  'santiago-kohn': 'node scrape-weyop.js "https://santiagokohn.com.ar" "santiago-kohn"',
+  'b-p-s-a': 'node scrape-weyop-api.js "https://bpsolucioneselectricas.com.ar" "b-p-s-a" "23"',
+}
 
 async function proveedoresActivos() {
   const rows = (await getValues('Proveedores!A1:Z3000')) || []
@@ -51,6 +57,7 @@ async function main() {
     else if (p.tipo === 'vtex') cmd = `node scrape-vtex.js "${p.url}" "${p.slug}"`
     else if (p.tipo === 'algolia') cmd = `node scrape-algolia.js "${p.url}" "${p.slug}"`
     else if (p.tipo === 'woo') cmd = `node scrape-woo.js "${p.url}" "${p.slug}"`
+    else if (p.tipo === 'weyop') cmd = `node scrape-weyop.js "${p.url}" "${p.slug}"`
     else { sinScraper.push(p); continue }
     console.log(`\n▶ Scrapeando ${p.nombre}…`)
     if (!correr(cmd, PRES)) console.error(`❌ ${p.nombre} falló al scrapear`)

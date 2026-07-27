@@ -40,13 +40,16 @@ async function addSheetIfMissing(title) {
   const tok = await accessToken()
   const meta = await (await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}`, { headers: { Authorization: 'Bearer ' + tok } })).json()
   if (meta.error) throw new Error(meta.error.message)
-  if (meta.sheets.some((s) => s.properties.title === title)) return false
+  // Google trata los nombres como únicos sin importar mayúsculas/espacios → comparo normalizado.
+  const norm = (s) => (s || '').trim().toLowerCase()
+  if (meta.sheets.some((s) => norm(s.properties.title) === norm(title))) return false
   const r = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}:batchUpdate`, {
     method: 'POST', headers: { Authorization: 'Bearer ' + tok, 'Content-Type': 'application/json' },
     body: JSON.stringify({ requests: [{ addSheet: { properties: { title } } }] }),
   })
   const j = await r.json()
-  if (j.error) throw new Error(j.error.message)
+  // si otra corrida/carrera ya la creó, no es fatal.
+  if (j.error) { if (/ya existe|already exists/i.test(j.error.message)) return false; throw new Error(j.error.message) }
   return true
 }
 module.exports = { accessToken, getValues, updateValues, addSheetIfMissing, SHEET_ID }

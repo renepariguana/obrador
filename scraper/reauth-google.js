@@ -1,11 +1,11 @@
-// Re-autoriza Google (Sheets) y guarda un token fresco en el Presupuestador.
+// Re-autoriza Google (Sheets) y guarda un token fresco en Obrador (scraper autocontenido).
 // Levanta un server local, imprime el link, captura el callback y guarda token.json.
 const fs = require('fs')
 const path = require('path')
 const http = require('http')
 const { google } = require('googleapis')
 
-const PRES = path.resolve(__dirname, '../../Presupuestador/scrapers')
+const PRES = __dirname // Obrador/scraper — token.json y client_secret.json locales
 const SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
 const PORT = 3456
 

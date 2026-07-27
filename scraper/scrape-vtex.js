@@ -38,7 +38,8 @@ function fila(base, p) {
   const mult = p.items?.[0]?.unitMultiplier
   const umTxt = um && um !== 'un' ? ` · UM: ${mult || 1} ${um}` : ''
   const sku = String(p.productReference || p.items?.[0]?.itemId || p.productId || '')
-  return [cat, sub, nombre, '$' + precio, link, (specs + umTxt).trim(), p.brand || '', sku]
+  const img = p.items?.[0]?.images?.[0]?.imageUrl || ''
+  return [cat, sub, nombre, '$' + precio, link, (specs + umTxt).trim(), p.brand || '', sku, img]
 }
 
 // IDs de las categorías HOJA del árbol (products/search por hoja no pasa el límite de 2500).

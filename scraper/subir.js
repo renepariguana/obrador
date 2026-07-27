@@ -63,7 +63,7 @@ async function proveedoresActivos() {
   if (!rows.length) return []
   const h = rows[0].map((x) => (x || '').trim())
   const ci = (re) => h.findIndex((x) => re.test(x))
-  const si = ci(/slug/i), ti = ci(/tipo|plataforma/i), ei = ci(/escrapeado/i), ai = ci(/^activo$/i)
+  const si = ci(/slug/i), ti = ci(/tipo|plataforma/i), ei = ci(/escrapeado/i), ai = ci(/^activo$/i), pi = ci(/provincia/i)
   const out = []
   for (let i = 1; i < rows.length; i++) {
     const slug = (si !== -1 ? rows[i][si] || '' : '').trim()
@@ -72,7 +72,8 @@ async function proveedoresActivos() {
     const esc = rows[i][ei] === true || String(ei !== -1 ? rows[i][ei] : '').toUpperCase() === 'TRUE'
     const activoViejo = ai !== -1 && (rows[i][ai] || '').trim().toUpperCase() === 'ACTIVO'
     if (ei !== -1 ? !esc : !activoViejo) continue
-    out.push({ slug, tipo: (ti !== -1 ? rows[i][ti] || '' : '').trim().toLowerCase() })
+    const provincia = (pi !== -1 ? rows[i][pi] || '' : '').trim() || 'Tucumán'
+    out.push({ slug, tipo: (ti !== -1 ? rows[i][ti] || '' : '').trim().toLowerCase(), provincia })
   }
   return out
 }
@@ -85,8 +86,7 @@ async function existentes(provIds) {
     const { data, error } = await sb
       .from('materiales')
       .select('id,proveedor_id,sku,url,activo')
-      .eq('provincia', PROVINCIA)
-      .in('proveedor_id', provIds)
+      .in('proveedor_id', provIds) // por proveedor_id (cada proveedor está en su provincia)
       .range(from, from + 999)
     if (error) throw new Error('leyendo existentes: ' + error.message)
     if (!data || !data.length) break
@@ -103,6 +103,7 @@ async function main() {
 
   const hasSku = !(await sb.from('materiales').select('sku').limit(1)).error
   const hasActivo = !(await sb.from('materiales').select('activo').limit(1)).error
+  const hasImagen = !(await sb.from('materiales').select('imagen').limit(1)).error
   if (!hasSku) console.warn('  ⚠️ falta columna "sku" — corré: alter table materiales add column if not exists sku text;')
   if (!hasActivo) console.warn('  ⚠️ faltan columnas "activo"/"baja_at" — sin altas/bajas. Corré el schema.sql.')
 
@@ -113,16 +114,16 @@ async function main() {
     if (!proveedor_id) { console.warn(`  ⚠️ proveedor "${p.slug}" no está en Supabase (tabla proveedores)`); continue }
     const archivo = path.join(PRES, `${p.slug}-rows.json`)
     if (!fs.existsSync(archivo)) { console.warn(`  ⚠️ no hay scrapeo para "${p.slug}" (${p.slug}-rows.json)`); continue }
-    const formato = p.tipo === 'vtex' || p.tipo === 'woo' ? 'easy' : 'emi' // vtex/woo = número crudo; el resto, formato AR
+    const formato = p.tipo === 'vtex' || p.tipo === 'woo' || p.tipo === 'tiendanube' ? 'easy' : 'emi' // vtex/woo/tiendanube = número crudo; el resto, formato AR
     const seenUrl = new Set()
     const rows = []
     for (const r of JSON.parse(fs.readFileSync(archivo, 'utf8'))) {
-      const [categoria, subcategoria, nombre, precioStr, url, descripcion, , sku] = r
+      const [categoria, subcategoria, nombre, precioStr, url, descripcion, , sku, imagen] = r
       const precio = parsePrecio(precioStr, formato)
       if (!nombre || precio == null || !url || seenUrl.has(url)) continue
       seenUrl.add(url)
       const row = {
-        provincia: PROVINCIA,
+        provincia: p.provincia,
         proveedor_id,
         categoria: categoria || null,
         subcategoria: subcategoria || null,
@@ -133,6 +134,7 @@ async function main() {
         descripcion: descripcion || null,
       }
       if (hasSku) row.sku = sku || null
+      if (hasImagen) row.imagen = imagen || null
       if (hasActivo) { row.activo = true; row.baja_at = null } // reactiva si había vuelto
       rows.push(row)
     }

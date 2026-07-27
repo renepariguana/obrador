@@ -35,14 +35,14 @@ const tabDe = (proveedor) => ((proveedor || 'OTROS').trim().replace(/[:\\/?*[\]]
 // Trae los materiales scrapeados desde Supabase (con cat/sub nativas y sku si la columna existe).
 async function traerMateriales() {
   const H = { apikey: SECRET, Authorization: 'Bearer ' + SECRET }
-  const enc = encodeURIComponent(PROVINCIA)
   const hasSku = Array.isArray(await (await fetch(`${SUPA}/rest/v1/materiales?select=sku&limit=1`, { headers: H })).json())
   const hasActivo = Array.isArray(await (await fetch(`${SUPA}/rest/v1/materiales?select=activo&limit=1`, { headers: H })).json())
   const sel = `nombre,precio,url,categoria,subcategoria${hasSku ? ',sku' : ''},proveedores(nombre)`
   const filtroActivo = hasActivo ? '&activo=is.true' : '' // solo vigentes (los dados de baja no aparecen)
   const out = []
   for (let off = 0; ; off += 1000) {
-    const url = `${SUPA}/rest/v1/materiales?provincia=eq.${enc}${filtroActivo}&select=${sel}&order=nombre&limit=1000&offset=${off}`
+    // todas las provincias (multi-provincia): una pestaña por proveedor sin importar su provincia
+    const url = `${SUPA}/rest/v1/materiales?select=${sel}&order=nombre&limit=1000&offset=${off}${filtroActivo}`
     const j = await (await fetch(url, { headers: H })).json()
     if (!Array.isArray(j) || !j.length) break
     out.push(...j)
@@ -85,7 +85,8 @@ async function sheetId(title) {
       headers: { Authorization: 'Bearer ' + tok },
     })
   ).json()
-  return { tok, sheet: meta.sheets.find((s) => s.properties.title === title) }
+  const norm = (s) => (s || '').trim().toLowerCase()
+  return { tok, sheet: meta.sheets.find((s) => norm(s.properties.title) === norm(title)) }
 }
 
 async function procesarTab(tab, prods, ordenDefault, rubroPorProv) {
@@ -112,7 +113,8 @@ async function procesarTab(tab, prods, ordenDefault, rubroPorProv) {
       SUBCATEGORIA: m.subcategoria || '',
       CODIGO: m.sku || '',
       PRODUCTO: m.nombre,
-      PRECIO: m.precio != null ? '$' + Math.round(m.precio).toLocaleString('es-AR') : '',
+      PRECIO: m.precio > 0 ? '$' + Math.round(m.precio).toLocaleString('es-AR') : 'Consultar', // sin precio publicado en la tienda origen
+
       LINK: m.url || '',
     })
   }

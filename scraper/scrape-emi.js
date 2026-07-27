@@ -69,13 +69,18 @@ async function scrapeEMI() {
       await new Promise(r => setTimeout(r, 600));
       // Breadcrumb de la página: ["Productos","CONSTRUCCIÓN","Pinturas"]. De atrás para adelante,
       // 2 niveles → SUBCATEGORIA (último) y CATEGORIA (anterior). "Productos" (raíz) se descarta.
-      const crumbs = await page.evaluate(() =>
-        [...document.querySelectorAll('nav a, ol li a')]
+      const data = await page.evaluate(() => {
+        const crumbs = [...document.querySelectorAll('nav a, ol li a')]
           .map(a => a.innerText.trim())
-          .filter(t => t && !/^productos$/i.test(t))
-      );
-      productos[urls[i]].sub = crumbs[crumbs.length - 1] || '';
-      productos[urls[i]].cat = crumbs[crumbs.length - 2] || '';
+          .filter(t => t && !/^productos$/i.test(t));
+        const og = document.querySelector('meta[property="og:image"]');
+        const im = document.querySelector('.product.media img, .gallery-placeholder img, .fotorama__img, img.product-image-photo, .product-image img');
+        const img = (og && og.content) || (im && (im.src || im.getAttribute('data-src'))) || '';
+        return { crumbs, img };
+      });
+      productos[urls[i]].sub = data.crumbs[data.crumbs.length - 1] || '';
+      productos[urls[i]].cat = data.crumbs[data.crumbs.length - 2] || '';
+      productos[urls[i]].img = data.img;
     } catch(e) {}
     if ((i + 1) % 10 === 0) console.log(`  ${i + 1}/${urls.length}`);
   }
@@ -86,7 +91,7 @@ async function scrapeEMI() {
   const skuDe = (url) => (url.match(/\/producto\/(\d+)/) || [])[1] || '';
   const rows = Object.entries(productos)
     // Layout uniforme con Easy: [cat, sub, nombre, precio, url, descripcion, marca, sku] (EMI sin descripción ni marca)
-    .map(([url, p]) => [p.cat, p.sub, p.nombre, p.precio, url, '', '', skuDe(url)])
+    .map(([url, p]) => [p.cat, p.sub, p.nombre, p.precio, url, '', '', skuDe(url), p.img || ''])
     .sort((a, b) => (a[0]+a[1]).localeCompare(b[0]+b[1], 'es') || a[2].localeCompare(b[2], 'es'));
 
   fs.writeFileSync('emi-rows.json', JSON.stringify(rows));
