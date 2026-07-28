@@ -80,6 +80,40 @@ export async function listarTrabajadores(oficio: string): Promise<Trabajador[]> 
   return out.sort((a, b) => b.puntos - a.puntos || b.rating - a.rating)
 }
 
+// Profesionales destacados (cualquier oficio), para la home. Ordenados por puntos/rating.
+export async function listarDestacados(limite = 8): Promise<Trabajador[]> {
+  const { data, error } = await supabase
+    .from('trabajador_oficios')
+    .select(
+      'oficio, zona, trabajadores!inner(profile_id, verificado, puntos, activo, descripcion, profiles!inner(nombre, zona, telefono, whatsapp))',
+    )
+    .limit(200)
+  if (error || !data) return []
+  const bloqueados = new Set(await idsBloqueados())
+  const out: Trabajador[] = []
+  const seen = new Set<string>()
+  for (const r of data as unknown as OficioRow[]) {
+    const tr = r.trabajadores
+    if (!tr || !tr.activo || seen.has(tr.profile_id) || bloqueados.has(tr.profile_id)) continue
+    seen.add(tr.profile_id)
+    out.push({
+      id: tr.profile_id,
+      nombre: tr.profiles?.nombre || 'Profesional',
+      oficio: r.oficio,
+      rating: 0,
+      puntos: tr.puntos || 0,
+      reviews: 0,
+      verificado: !!tr.verificado,
+      zona: r.zona || tr.profiles?.zona || null,
+      dist: '',
+      telefono: tr.profiles?.telefono,
+      whatsapp: tr.profiles?.whatsapp,
+    })
+  }
+  await completarRatings(out)
+  return out.sort((a, b) => b.puntos - a.puntos || b.rating - a.rating).slice(0, limite)
+}
+
 // Perfil completo de un trabajador + sus reseñas.
 export async function getTrabajador(id: string): Promise<{ trabajador: Trabajador; reviews: Review[] } | null> {
   const { data } = await supabase

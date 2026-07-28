@@ -1,12 +1,12 @@
 import React, { useState, useCallback, useEffect } from 'react'
-import { View, Text, ScrollView, Pressable, StyleSheet, Image } from 'react-native'
+import { View, Text, ScrollView, Pressable, StyleSheet, Image, ActivityIndicator } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useNavigation, useFocusEffect } from '@react-navigation/native'
 import { MapaPedidos } from '../components/MapaPedidos'
 import { SelectorDireccion } from '../components/SelectorDireccion'
 import { Icon, IconName } from '../components/Icon'
 import { useTheme, spacing, radius, Theme } from '../lib/theme'
-import { cercaDe, Profesional } from '../data/profesionales'
+import { listarDestacados, Trabajador } from '../data/trabajadoresApi'
 import { pedidosAbiertos, PedidoVista } from '../data/pedidosApi'
 import { getProveedores } from '../data/materialesApi'
 import { useZona } from '../lib/zona'
@@ -73,10 +73,16 @@ export default function InicioScreen() {
   const [showUbic, setShowUbic] = useState(false)
   const [pedidos, setPedidos] = useState<PedidoVista[]>([])
   const [provs, setProvs] = useState<{ nombre: string; slug: string; logo: string | null }[]>([])
+  const [pros, setPros] = useState<Trabajador[]>([])
+  const [prosLoading, setProsLoading] = useState(true)
 
   useFocusEffect(
     useCallback(() => {
       pedidosAbiertos().then(setPedidos)
+      listarDestacados(8).then((r) => {
+        setPros(r)
+        setProsLoading(false)
+      })
     }, [])
   )
 
@@ -123,7 +129,7 @@ export default function InicioScreen() {
     </ScrollView>
   )
 
-  const renderPros = (list: Profesional[]) => (
+  const renderPros = (list: Trabajador[]) => (
     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.strip}>
       {list.map((p) => (
         <Pressable
@@ -263,7 +269,15 @@ export default function InicioScreen() {
 
         {/* ===== PROFESIONALES ===== */}
         <SectionHeader title="Profesionales cerca tuyo" />
-        {renderPros(cercaDe(zona).slice(0, 8))}
+        {prosLoading ? (
+          <ActivityIndicator color={t.text3} style={{ marginVertical: spacing.lg }} />
+        ) : pros.length === 0 ? (
+          <Text style={s.emptyPros}>
+            Todavía no hay profesionales en tu zona. ¡Ofrecé tus servicios y sé el primero!
+          </Text>
+        ) : (
+          renderPros(pros)
+        )}
 
         {/* NOTA: secciones "Mejores trabajos", "Urgentes cerca tuyo" y
             "Los más valorados" sacadas por ahora (datos y helpers quedan
@@ -334,6 +348,7 @@ const styles = (t: Theme) =>
       borderColor: t.border,
     },
     strip: { paddingHorizontal: spacing.lg, gap: spacing.md },
+    emptyPros: { color: t.text2, fontSize: 14, lineHeight: 20, paddingHorizontal: spacing.lg, paddingVertical: spacing.md },
     provBanner: {
       flexDirection: 'row',
       alignItems: 'center',
