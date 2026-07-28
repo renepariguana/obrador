@@ -14,6 +14,7 @@ export type Pedido = {
   estado: EstadoPedido
   asignado_a: string | null
   creado_at: string
+  fotos: string[]
 }
 
 // Cliente publica un pedido nuevo (estado 'abierto').
@@ -23,6 +24,7 @@ export async function publicarPedido(p: {
   zona: string | null
   lat?: number | null
   lng?: number | null
+  fotos?: string[]
 }): Promise<{ error?: string; id?: string }> {
   const { data: auth } = await supabase.auth.getUser()
   if (!auth.user) return { error: 'Iniciá sesión para publicar' }
@@ -35,12 +37,31 @@ export async function publicarPedido(p: {
       zona: p.zona,
       lat: p.lat ?? null,
       lng: p.lng ?? null,
+      fotos: p.fotos ?? [],
       estado: 'abierto',
     })
     .select('id')
     .single()
   if (error) return { error: error.message }
   return { id: (data as { id: string }).id }
+}
+
+// Sube una imagen local (uri de expo-image-picker) al bucket 'pedidos'. Devuelve la URL pública.
+export async function subirFotoPedido(uri: string): Promise<string | null> {
+  const { data: auth } = await supabase.auth.getUser()
+  if (!auth.user) return null
+  try {
+    const ext = (uri.split('.').pop() || 'jpg').toLowerCase().split('?')[0]
+    const contentType = ext === 'png' ? 'image/png' : ext === 'webp' ? 'image/webp' : 'image/jpeg'
+    const path = `${auth.user.id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`
+    const resp = await fetch(uri)
+    const arrayBuffer = await resp.arrayBuffer()
+    const { error } = await supabase.storage.from('pedidos').upload(path, arrayBuffer, { contentType })
+    if (error) return null
+    return supabase.storage.from('pedidos').getPublicUrl(path).data.publicUrl
+  } catch {
+    return null
+  }
 }
 
 // Pedidos que publicó el usuario logueado.
@@ -73,6 +94,7 @@ export type PedidoVista = {
   min: number
   urgente: boolean
   yaPostulado: boolean
+  fotos: string[]
 }
 
 // Centroide aproximado de cada zona (mientras no haya geolocalización real → Tarea 7).
@@ -149,6 +171,7 @@ export async function pedidosAbiertos(oficios?: string[]): Promise<PedidoVista[]
         min: 11,
         urgente: (p.descripcion || '').includes('⚡ Urgente'),
         yaPostulado: (p.postulaciones || []).some((x) => x.trabajador_id === uid),
+        fotos: (p as unknown as { fotos?: string[] }).fotos ?? [],
       }
     })
 }

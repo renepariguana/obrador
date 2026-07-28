@@ -1,14 +1,15 @@
 import React, { useState } from 'react'
-import { View, Text, ScrollView, TextInput, Pressable, StyleSheet, Alert, ActivityIndicator, Modal } from 'react-native'
+import { View, Text, ScrollView, TextInput, Pressable, StyleSheet, Alert, ActivityIndicator, Modal, Image } from 'react-native'
 import { useNavigation } from '@react-navigation/native'
 import * as Location from 'expo-location'
+import * as ImagePicker from 'expo-image-picker'
 import { AppHeader } from '../components/AppHeader'
 import { Icon } from '../components/Icon'
 import { SelectorUbicacionMapa, Coord } from '../components/SelectorUbicacionMapa'
 import { useTheme, spacing, radius, Theme } from '../lib/theme'
 import { useZona } from '../lib/zona'
 import { useGate } from '../lib/gate'
-import { publicarPedido } from '../data/pedidosApi'
+import { publicarPedido, subirFotoPedido } from '../data/pedidosApi'
 
 const TUCUMAN: Coord = { lat: -26.8241, lng: -65.2226 }
 
@@ -42,6 +43,7 @@ export default function PublicarPedidoScreen() {
   const [initialCoord, setInitialCoord] = useState<Coord | null>(null)
   const [showMapa, setShowMapa] = useState(false)
   const [buscandoGPS, setBuscandoGPS] = useState(false)
+  const [fotos, setFotos] = useState<string[]>([])
   const [publicando, setPublicando] = useState(false)
 
   const listo = rubro !== null && desc.trim().length >= 8 && coord !== null
@@ -72,6 +74,18 @@ export default function PublicarPedidoScreen() {
     } catch {}
   }
 
+  const agregarFotos = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync()
+    if (status !== 'granted') return Alert.alert('Fotos', 'Necesitamos permiso para acceder a tus fotos.')
+    const res = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsMultipleSelection: true,
+      selectionLimit: 5 - fotos.length,
+      quality: 0.7,
+    })
+    if (!res.canceled) setFotos((f) => [...f, ...res.assets.map((a) => a.uri)].slice(0, 5))
+  }
+
   const publicar = () =>
     gate('publicar un pedido', async () => {
       setPublicando(true)
@@ -79,12 +93,19 @@ export default function PublicarPedidoScreen() {
         desc.trim() +
         (urgente ? '\n\n⚡ Urgente' : '') +
         (presupuesto.trim() ? `\n\nPresupuesto estimado: $${presupuesto.trim()}` : '')
+      // Subir las fotos (si hay) y quedarnos con las URLs que subieron ok.
+      const urls: string[] = []
+      for (const uri of fotos) {
+        const url = await subirFotoPedido(uri)
+        if (url) urls.push(url)
+      }
       const r = await publicarPedido({
         oficio: rubro as string,
         descripcion,
         zona: zonaTxt ?? zona,
         lat: coord?.lat ?? null,
         lng: coord?.lng ?? null,
+        fotos: urls,
       })
       setPublicando(false)
       if (r.error) return Alert.alert('No se pudo publicar', r.error)
@@ -171,6 +192,24 @@ export default function PublicarPedidoScreen() {
           />
         </View>
 
+        {/* Fotos */}
+        <Text style={s.label}>Fotos (opcional)</Text>
+        <View style={s.fotosRow}>
+          {fotos.map((uri, i) => (
+            <View key={uri} style={s.fotoThumb}>
+              <Image source={{ uri }} style={s.fotoImg} />
+              <Pressable style={s.fotoX} onPress={() => setFotos((f) => f.filter((_, j) => j !== i))} hitSlop={6}>
+                <Icon name="close" size={12} color={t.surface} />
+              </Pressable>
+            </View>
+          ))}
+          {fotos.length < 5 && (
+            <Pressable style={s.fotoAdd} onPress={agregarFotos}>
+              <Icon name="plus" size={26} color={t.text3} />
+            </Pressable>
+          )}
+        </View>
+
         {/* Publicar */}
         <Pressable
           style={[s.publicar, (!listo || publicando) && s.publicarOff]}
@@ -201,6 +240,11 @@ const styles = (t: Theme) =>
     headerTitle: { color: t.onPrimary, fontSize: 20, fontWeight: '900', letterSpacing: -0.4 },
     label: { color: t.text, fontSize: 15, fontWeight: '800', marginTop: spacing.lg, marginBottom: spacing.sm },
     wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+    fotosRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginTop: spacing.xs },
+    fotoThumb: { width: 72, height: 72, borderRadius: radius.md, overflow: 'hidden' },
+    fotoImg: { width: '100%', height: '100%' },
+    fotoX: { position: 'absolute', top: 3, right: 3, width: 20, height: 20, borderRadius: 10, backgroundColor: 'rgba(0,0,0,0.55)', alignItems: 'center', justifyContent: 'center' },
+    fotoAdd: { width: 72, height: 72, borderRadius: radius.md, borderWidth: 1, borderColor: t.border, borderStyle: 'dashed', backgroundColor: t.surface, alignItems: 'center', justifyContent: 'center' },
     chip: { backgroundColor: t.surface, borderWidth: 1, borderColor: t.border, borderRadius: radius.pill, paddingHorizontal: spacing.md, paddingVertical: 9 },
     chipOn: { backgroundColor: t.sel, borderColor: t.sel },
     chipTxt: { color: t.text2, fontWeight: '700', fontSize: 13 },

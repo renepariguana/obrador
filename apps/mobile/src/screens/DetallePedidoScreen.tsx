@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react'
-import { View, Text, ScrollView, TextInput, Pressable, StyleSheet, Alert, ActivityIndicator, Linking } from 'react-native'
+import { View, Text, ScrollView, TextInput, Pressable, StyleSheet, Alert, ActivityIndicator, Linking, Image } from 'react-native'
 import { AppHeader } from '../components/AppHeader'
 import { Icon } from '../components/Icon'
 import { useTheme, spacing, radius, Theme } from '../lib/theme'
@@ -28,6 +28,7 @@ export default function DetallePedidoScreen({ route, navigation }: any) {
   const oficio: string = raw.oficio
   const zona: string = raw.zona || 'Sin zona'
   const texto: string = raw.quote ?? raw.descripcion ?? ''
+  const fotos: string[] = raw.fotos ?? []
   const urgente: boolean = raw.urgente ?? String(raw.descripcion || '').includes('⚡ Urgente')
   const titulo = dueno ? `Tu pedido de ${oficio}` : `${raw.cliente || 'Cliente'} necesita un ${oficio}`
 
@@ -188,6 +189,16 @@ export default function DetallePedidoScreen({ route, navigation }: any) {
         {/* Descripción */}
         <Text style={s.section}>El trabajo</Text>
         <Text style={s.quote}>“{texto}”</Text>
+
+        {fotos.length > 0 && (
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.fotos}>
+            {fotos.map((uri) => (
+              <Pressable key={uri} onPress={() => Linking.openURL(uri)}>
+                <Image source={{ uri }} style={s.foto} />
+              </Pressable>
+            ))}
+          </ScrollView>
+        )}
 
         {/* Datos */}
         <View style={s.info}>
@@ -362,6 +373,8 @@ const styles = (t: Theme) =>
     urgenteTxt: { color: t.text, fontWeight: '800', fontSize: 12 },
     section: { color: t.text, fontSize: 16, fontWeight: '900', paddingHorizontal: spacing.lg, paddingTop: spacing.xl, paddingBottom: spacing.sm },
     quote: { color: t.text, fontSize: 15, lineHeight: 22, paddingHorizontal: spacing.lg, fontStyle: 'italic' },
+    fotos: { gap: spacing.sm, paddingHorizontal: spacing.lg, paddingTop: spacing.md },
+    foto: { width: 96, height: 96, borderRadius: radius.md, backgroundColor: t.surface2 },
     info: { backgroundColor: t.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: t.border, marginHorizontal: spacing.lg, marginTop: spacing.xl, padding: spacing.md, gap: spacing.md },
     infoRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
     infoTxt: { color: t.text2, fontSize: 13, fontWeight: '600' },
