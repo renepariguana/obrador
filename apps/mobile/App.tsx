@@ -122,7 +122,7 @@ function RootTabs() {
                 name={focused && tab.iconOn ? tab.iconOn : tab.icon}
                 size={tab.name === 'Inicio' ? 26 : tab.name === 'Obrador' ? 25 : 22}
                 color={color}
-                filled={focused}
+                filled={focused && tab.iconOn !== tab.icon}
               />
             ),
           }}

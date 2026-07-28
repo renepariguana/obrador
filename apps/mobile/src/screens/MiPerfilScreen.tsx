@@ -152,24 +152,7 @@ export default function MiPerfilScreen() {
         {/* Accesos rápidos */}
         <View style={s.tiles}>
           <Tile icon="user" label="Datos personales" onPress={() => setEditOpen(true)} />
-          <Tile icon="star" label="Mis reseñas" />
-          <Tile icon="badge" label="Verificación" />
           <Tile icon="phone" label="Ayuda" onPress={() => Linking.openURL('mailto:renepariguana@gmail.com?subject=Ayuda Obrador')} />
-        </View>
-
-        {/* Completá tu perfil */}
-        <View style={s.progress}>
-          <View style={s.progressHead}>
-            <Text style={s.progressTitle}>Completá tu perfil</Text>
-            <Text style={s.progressLink}>Completar</Text>
-          </View>
-          <Text style={s.progressSub}>1 de 3</Text>
-          <View style={s.track}>
-            <View style={[s.seg, s.segOn]} />
-            <View style={s.seg} />
-            <View style={s.seg} />
-          </View>
-          <Text style={s.progressHint}>Verificá tu identidad y sumá tu primer trabajo.</Text>
         </View>
 
         {/* Actividad */}
@@ -182,7 +165,6 @@ export default function MiPerfilScreen() {
         {/* Configuración */}
         <Text style={s.section}>Configuración</Text>
         <View style={s.group}>
-          <Row icon="bell" label="Notificaciones" />
           <Row
             icon="lock"
             label="Usuarios bloqueados"
