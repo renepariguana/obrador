@@ -91,7 +91,7 @@ export default function MaterialesScreen() {
         title="Materiales"
         right={
           <Pressable hitSlop={8} onPress={() => navigation.navigate('Proveedores')} style={s.verMapa}>
-            <Icon name="pin" size={19} color={t.onPrimary} />
+            <Icon name="obrador" size={19} color={t.onPrimary} />
             <Text style={s.verMapaTxt}>Mapa</Text>
           </Pressable>
         }
@@ -276,7 +276,7 @@ const styles = (t: Theme) =>
     verMapaTxt: { color: t.onPrimary, fontWeight: '800', fontSize: 14 },
     provinChips: { gap: spacing.sm, paddingHorizontal: spacing.lg, paddingTop: spacing.md, paddingBottom: 2 },
     provinChip: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: t.surface, borderWidth: 1, borderColor: t.border, borderRadius: radius.pill, paddingHorizontal: spacing.md, paddingVertical: 8 },
-    provinChipOn: { backgroundColor: t.text, borderColor: t.text },
+    provinChipOn: { backgroundColor: t.sel, borderColor: t.sel },
     provinTxt: { color: t.text2, fontWeight: '800', fontSize: 13 },
     provinTxtOn: { color: t.surface },
     marcas: { gap: spacing.md, paddingHorizontal: spacing.lg, paddingTop: spacing.md, paddingBottom: spacing.sm, alignItems: 'flex-start' },
@@ -292,7 +292,7 @@ const styles = (t: Theme) =>
       justifyContent: 'center',
       overflow: 'hidden',
     },
-    marcaLogoOn: { borderColor: t.text, borderWidth: 2.5 },
+    marcaLogoOn: { borderColor: t.sel, borderWidth: 2.5 },
     marcaImg: { width: 46, height: 46 },
     marcaInicial: { color: t.text2, fontSize: 24, fontWeight: '900' },
     marcaTxt: { color: t.text2, fontWeight: '700', fontSize: 11, textAlign: 'center', marginTop: 5, lineHeight: 13 },
@@ -307,7 +307,7 @@ const styles = (t: Theme) =>
       paddingVertical: 8,
       maxWidth: 220,
     },
-    chipOn: { backgroundColor: t.text, borderColor: t.text },
+    chipOn: { backgroundColor: t.sel, borderColor: t.sel },
     chipTxt: { color: t.text2, fontWeight: '700', fontSize: 13 },
     chipTxtOn: { color: t.surface },
     subchips: { gap: 6, paddingHorizontal: spacing.lg, paddingBottom: spacing.sm },
@@ -319,7 +319,7 @@ const styles = (t: Theme) =>
       paddingHorizontal: spacing.md,
       paddingVertical: 6,
     },
-    subchipOn: { backgroundColor: t.text, borderColor: t.text },
+    subchipOn: { backgroundColor: t.sel, borderColor: t.sel },
     subchipTxt: { color: t.text2, fontWeight: '700', fontSize: 12 },
     subchipTxtOn: { color: t.surface },
     center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: spacing.xl },

@@ -29,8 +29,8 @@ const html = (
   .bubble .txt{flex:1;min-width:0;}
   .bubble .oficio{display:block;font:800 12px -apple-system,system-ui,sans-serif;color:#16181D;line-height:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .bubble .desc{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font:600 10px -apple-system,system-ui,sans-serif;color:#8A9099;line-height:12px;margin-top:2px;}
-  .bubble.sel{background:#1A1A1A;z-index:9999;}
-  .bubble.sel::after{border-top-color:#1A1A1A;}
+  .bubble.sel{background:#3A3F47;z-index:9999;}
+  .bubble.sel::after{border-top-color:#3A3F47;}
   .bubble.sel .ico{background:rgba(255,255,255,.15);}
   .bubble.sel .ico svg{stroke:#fff;}
   .bubble.sel .oficio{color:#fff;}

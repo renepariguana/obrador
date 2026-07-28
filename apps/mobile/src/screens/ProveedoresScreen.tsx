@@ -297,7 +297,7 @@ const styles = (t: Theme) =>
       backgroundColor: t.surface2,
       maxWidth: 220,
     },
-    chipOn: { backgroundColor: t.text },
+    chipOn: { backgroundColor: t.sel },
     chipTxt: { color: t.text2, fontWeight: '700', fontSize: 13 },
     chipTxtOn: { color: t.surface },
 

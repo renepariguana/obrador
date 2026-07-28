@@ -358,7 +358,7 @@ const styles = (t: Theme) =>
     tag: { backgroundColor: t.surface2, borderRadius: radius.pill, paddingHorizontal: 10, paddingVertical: 5 },
     tagTxt: { color: t.text2, fontSize: 11, fontWeight: '800' },
     urgente: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: t.surface2, alignSelf: 'flex-start', marginHorizontal: spacing.lg, borderRadius: radius.pill, paddingHorizontal: spacing.md, paddingVertical: 6 },
-    urgenteDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: t.text },
+    urgenteDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: t.sel },
     urgenteTxt: { color: t.text, fontWeight: '800', fontSize: 12 },
     section: { color: t.text, fontSize: 16, fontWeight: '900', paddingHorizontal: spacing.lg, paddingTop: spacing.xl, paddingBottom: spacing.sm },
     quote: { color: t.text, fontSize: 15, lineHeight: 22, paddingHorizontal: spacing.lg, fontStyle: 'italic' },

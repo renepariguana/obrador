@@ -19,7 +19,7 @@ const html = (key: string, markers: Marker[], me: { lat: number; lng: number } |
 <style>
   html,body,#map{height:100%;margin:0;padding:0;background:#EEF0F3;}
   /* punto chico por defecto */
-  .dot{width:14px;height:14px;border-radius:50%;background:#1A1A1A;border:2px solid #fff;
+  .dot{width:14px;height:14px;border-radius:50%;background:#3A3F47;border:2px solid #fff;
     box-shadow:0 1px 4px rgba(0,0,0,.35);cursor:pointer;transform:translateY(-1px);}
   /* tu ubicación */
   .me{width:16px;height:16px;border-radius:50%;background:#2E7DF7;border:3px solid #fff;box-shadow:0 0 0 4px rgba(46,125,247,.22);}

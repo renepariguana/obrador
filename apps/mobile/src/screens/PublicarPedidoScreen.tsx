@@ -23,6 +23,7 @@ const RUBROS = [
   'Zinguero',
   'Durlero',
   'Gasista',
+  'Fletero',
 ]
 
 export default function PublicarPedidoScreen() {
@@ -201,10 +202,10 @@ const styles = (t: Theme) =>
     label: { color: t.text, fontSize: 15, fontWeight: '800', marginTop: spacing.lg, marginBottom: spacing.sm },
     wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
     chip: { backgroundColor: t.surface, borderWidth: 1, borderColor: t.border, borderRadius: radius.pill, paddingHorizontal: spacing.md, paddingVertical: 9 },
-    chipOn: { backgroundColor: t.text, borderColor: t.text },
+    chipOn: { backgroundColor: t.sel, borderColor: t.sel },
     chipTxt: { color: t.text2, fontWeight: '700', fontSize: 13 },
     chipTxtOn: { color: t.surface },
-    chipDanger: { backgroundColor: t.text, borderColor: t.text },
+    chipDanger: { backgroundColor: t.sel, borderColor: t.sel },
     chipDangerTxt: { color: t.bg },
     textarea: {
       minHeight: 110,

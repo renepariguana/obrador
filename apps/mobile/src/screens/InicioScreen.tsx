@@ -23,6 +23,7 @@ const OFICIOS: Oficio[] = [
   { label: 'Paisajista', icon: 'leaf' },
   { label: 'Zinguero', icon: 'home' },
   { label: 'Durlero', icon: 'box' },
+  { label: 'Fletero', icon: 'truck' },
 ]
 
 type Pro = { nombre: string; oficio: string; rating: number; verificado: boolean }
@@ -205,7 +206,7 @@ export default function InicioScreen() {
         {/* ===== BANNER PROVEEDORES ===== */}
         <Pressable style={s.provBanner} onPress={() => navigation.navigate('Proveedores')}>
           <View style={s.provIcon}>
-            <Icon name="truck" size={24} color={t.surface} />
+            <Icon name="obrador" size={24} color={t.surface} />
           </View>
           <View style={{ flex: 1 }}>
             <Text style={s.provTitle}>Proveedores en el mapa</Text>
@@ -349,7 +350,7 @@ const styles = (t: Theme) =>
       width: 46,
       height: 46,
       borderRadius: radius.md,
-      backgroundColor: t.text,
+      backgroundColor: t.sel,
       alignItems: 'center',
       justifyContent: 'center',
     },
@@ -378,7 +379,7 @@ const styles = (t: Theme) =>
       paddingVertical: 4,
     },
     badgePrimary: { backgroundColor: t.primary },
-    badgeDanger: { backgroundColor: t.text },
+    badgeDanger: { backgroundColor: t.sel },
     badgeTxt: { fontSize: 11, fontWeight: '800' },
     jobBody: { padding: spacing.md },
     jobTitle: { color: t.text, fontSize: 15, fontWeight: '800' },
@@ -442,7 +443,7 @@ const styles = (t: Theme) =>
       width: 20,
       height: 20,
       borderRadius: 10,
-      backgroundColor: t.text,
+      backgroundColor: t.sel,
       borderWidth: 2,
       borderColor: t.surface,
       alignItems: 'center',

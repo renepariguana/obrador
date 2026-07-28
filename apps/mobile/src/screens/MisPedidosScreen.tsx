@@ -23,7 +23,7 @@ export default function MisPedidosScreen() {
   const ESTADO: Record<EstadoPedido, { txt: string; bg: string; fg: string }> = {
     abierto: { txt: 'Abierto', bg: t.primary, fg: t.onPrimary },
     asignado: { txt: 'Asignado', bg: t.text2, fg: t.surface },
-    completado: { txt: 'Completado', bg: t.text, fg: t.bg },
+    completado: { txt: 'Completado', bg: t.sel, fg: t.bg },
     cancelado: { txt: 'Cancelado', bg: t.surface2, fg: t.text3 },
   }
 

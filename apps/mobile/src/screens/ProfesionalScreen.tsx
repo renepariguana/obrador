@@ -138,7 +138,7 @@ export default function ProfesionalScreen({ route, navigation }: any) {
                 <View style={s.reviewHead}>
                   <Text style={s.reviewAutor}>{r.autorNombre}</Text>
                   <View style={s.reviewStars}>
-                    <Icon name="star" size={13} color={t.text} />
+                    <Icon name="star" size={13} color={t.sel} />
                     <Text style={s.reviewRating}>{r.estrellas}</Text>
                   </View>
                 </View>
@@ -181,7 +181,7 @@ const styles = (t: Theme) =>
       width: 28,
       height: 28,
       borderRadius: 14,
-      backgroundColor: t.text,
+      backgroundColor: t.sel,
       borderWidth: 3,
       borderColor: t.bg,
       alignItems: 'center',
@@ -193,7 +193,7 @@ const styles = (t: Theme) =>
       flexDirection: 'row',
       alignItems: 'center',
       gap: 5,
-      backgroundColor: t.text,
+      backgroundColor: t.sel,
       borderRadius: radius.pill,
       paddingHorizontal: 10,
       paddingVertical: 5,
@@ -223,7 +223,7 @@ const styles = (t: Theme) =>
       alignSelf: 'stretch',
       height: 50,
       borderRadius: radius.md,
-      backgroundColor: t.text,
+      backgroundColor: t.sel,
       marginTop: spacing.md,
     },
     ctaTxt: { color: t.surface, fontSize: 16, fontWeight: '800' },

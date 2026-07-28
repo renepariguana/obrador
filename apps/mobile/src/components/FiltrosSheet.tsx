@@ -105,7 +105,7 @@ const styles = (t: Theme) =>
     label: { color: t.text, fontSize: 15, fontWeight: '800', marginTop: spacing.xl, marginBottom: spacing.sm },
     wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
     chip: { backgroundColor: t.surface2, borderRadius: radius.pill, paddingHorizontal: spacing.md, paddingVertical: 9 },
-    chipOn: { backgroundColor: t.text },
+    chipOn: { backgroundColor: t.sel },
     chipTxt: { color: t.text2, fontWeight: '700', fontSize: 13 },
     chipTxtOn: { color: t.surface },
     actions: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.xl },

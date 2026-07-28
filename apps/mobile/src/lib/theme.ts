@@ -9,6 +9,7 @@ export type Theme = {
   text: string
   text2: string
   text3: string
+  sel: string // gris oscuro de acento (chips/botones/badges "en negro"); tono del tab activo, no negro puro
   border: string
   danger: string
   rating: string
@@ -23,6 +24,7 @@ const light: Theme = {
   text: '#16181D',
   text2: '#6B7280',
   text3: '#9AA1AD',
+  sel: '#3A3F47',
   border: '#E6E8EC',
   danger: '#C7362B',
   rating: '#16181D',
@@ -37,6 +39,7 @@ const dark: Theme = {
   text: '#ECEEF2',
   text2: '#9AA1AD',
   text3: '#6B7280',
+  sel: '#ECEEF2',
   border: '#2A2D37',
   danger: '#F0655A',
   rating: '#ECEEF2',

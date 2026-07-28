@@ -35,7 +35,7 @@ export type PerfilProfesional = { esTrabajador: boolean; descripcion: string; of
 // Oficios disponibles para elegir al ofrecer servicios.
 export const OFICIOS = [
   'Plomero', 'Electricista', 'Pintor', 'Albañil', 'Carpintero', 'Gasista', 'Herrero',
-  'Techista', 'Durlero', 'Zinguero', 'Cerrajero', 'Vidriero', 'Aire acondicionado', 'Jardinero / Paisajista',
+  'Techista', 'Durlero', 'Zinguero', 'Cerrajero', 'Vidriero', 'Aire acondicionado', 'Jardinero / Paisajista', 'Fletero',
 ]
 
 export async function getMiPerfilProfesional(): Promise<PerfilProfesional | null> {

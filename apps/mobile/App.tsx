@@ -82,7 +82,7 @@ function MiPerfilStack() {
 const TABS: { name: string; comp: React.ComponentType; icon: IconName; iconOn?: IconName }[] = [
   { name: 'Inicio', comp: InicioStack, icon: 'home', iconOn: 'homeFill' },
   { name: 'Materiales', comp: MaterialesStack, icon: 'container', iconOn: 'containerFill' },
-  { name: 'Trabajos', comp: TrabajosStack, icon: 'obrador', iconOn: 'obrador' },
+  { name: 'Trabajos', comp: TrabajosStack, icon: 'hand', iconOn: 'hand' },
   { name: 'Presupuestador', comp: PresupuestadorScreen, icon: 'chat', iconOn: 'chatFill' },
   { name: 'Mi perfil', comp: MiPerfilStack, icon: 'user', iconOn: 'userFill' },
 ]
