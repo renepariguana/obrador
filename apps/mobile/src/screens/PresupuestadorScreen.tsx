@@ -10,13 +10,17 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
+  Share,
+  Alert,
 } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { useNavigation } from '@react-navigation/native'
 import { AppHeader } from '../components/AppHeader'
 import { Icon } from '../components/Icon'
 import { useTheme, spacing, radius, Theme } from '../lib/theme'
 import { getItemsAP, getItemsCache, getManoObra, getManoObraCache, pesos, RubroAP, ItemAP, ManoObra } from '../data/presupuestadorApi'
 import { getMateriales, Material } from '../data/materialesApi'
+import { listarPresupuestos, guardarPresupuesto, borrarPresupuesto, PresupuestoGuardado } from '../data/presupuestosApi'
 
 const PROV = 'Tucumán' // provincia para el catálogo de materiales
 
@@ -49,10 +53,19 @@ const costoAnalisis = (a: AnalisisEdit) =>
   [...a.materiales, ...a.manoobra, ...a.equipos].reduce((s, f) => s + f.cantidad * f.precio, 0)
 const comp = (nombre: string, unidad: string, precio: number): CompEdit => ({ nombre, unidad: unidad || 'u', precio, cantidad: 1, cantidadStr: '1' })
 
+function fmtFecha(iso: string) {
+  try {
+    return new Date(iso).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: '2-digit' })
+  } catch {
+    return ''
+  }
+}
+
 export default function PresupuestadorScreen() {
   const t = useTheme()
   const s = styles(t)
   const insets = useSafeAreaInsets()
+  const navigation = useNavigation<any>()
 
   const [rubros, setRubros] = useState<RubroAP[]>([])
   const [items, setItems] = useState<ItemAP[]>([])
@@ -62,6 +75,9 @@ export default function PresupuestadorScreen() {
   const [nombreObra, setNombreObra] = useState('')
   const [superficie, setSuperficie] = useState('')
   const [lineas, setLineas] = useState<Linea[]>([])
+  const [presupuestoId, setPresupuestoId] = useState<string | null>(null)
+  const [guardados, setGuardados] = useState<PresupuestoGuardado<Linea>[]>([])
+  const [showGuardados, setShowGuardados] = useState(false)
 
   const [showAdd, setShowAdd] = useState(false)
   const [reemplazo, setReemplazo] = useState<Linea | null>(null)
@@ -185,6 +201,66 @@ export default function PresupuestadorScreen() {
     setReemplazo(null)
   }
 
+  // Guardar / cargar / borrar / compartir presupuestos
+  const guardar = async () => {
+    if (lineas.length === 0) return Alert.alert('Presupuesto vacío', 'Agregá al menos un ítem antes de guardar.')
+    const id = presupuestoId || String(Date.now())
+    const p: PresupuestoGuardado<Linea> = {
+      id,
+      nombre: nombreObra.trim() || 'Presupuesto sin nombre',
+      superficie,
+      fecha: new Date().toISOString(),
+      total: totalGeneral,
+      lineas,
+    }
+    await guardarPresupuesto(p)
+    setPresupuestoId(id)
+    Alert.alert('Guardado', 'El presupuesto quedó guardado en tu teléfono.')
+  }
+  const abrirGuardados = async () => {
+    setGuardados(await listarPresupuestos())
+    setShowGuardados(true)
+  }
+  const cargar = (p: PresupuestoGuardado<Linea>) => {
+    setNombreObra(p.nombre === 'Presupuesto sin nombre' ? '' : p.nombre)
+    setSuperficie(p.superficie || '')
+    setLineas(p.lineas || [])
+    setPresupuestoId(p.id)
+    setShowGuardados(false)
+  }
+  const borrar = async (id: string) => {
+    setGuardados(await borrarPresupuesto(id))
+    if (presupuestoId === id) setPresupuestoId(null)
+  }
+  const nuevo = () => {
+    setNombreObra('')
+    setSuperficie('')
+    setLineas([])
+    setPresupuestoId(null)
+  }
+  const compartir = async () => {
+    if (lineas.length === 0) return Alert.alert('Presupuesto vacío', 'Agregá al menos un ítem antes de compartir.')
+    const L: string[] = []
+    L.push(`PRESUPUESTO — ${nombreObra.trim() || 'Sin nombre'}`)
+    if (superficie.trim()) L.push(`Superficie: ${superficie} m²`)
+    L.push(fmtFecha(new Date().toISOString()))
+    L.push('')
+    grupos.forEach((g) => {
+      L.push(`${g.rubroId}. ${(g.nombre || 'Sin rubro').toUpperCase()}`)
+      g.lineas.forEach((l, i) => {
+        L.push(`  ${g.rubroId}.${i + 1} ${sentence(l.item.nombre)} — ${l.cantidadStr} ${l.item.unidad} × ${pesos(precioItem(l))} = ${pesos(totalLinea(l))}`)
+      })
+      L.push(`  Subtotal: ${pesos(g.total)}`)
+      L.push('')
+    })
+    L.push(`TOTAL: ${pesos(totalGeneral)}`)
+    L.push('')
+    L.push('Hecho con Obrador')
+    try {
+      await Share.share({ message: L.join('\n') })
+    } catch {}
+  }
+
   // Elegir un ítem del modal de componentes → agregar a la sección y cerrar.
   const elegirMaterial = (m: Material) => {
     if (!addComp) return
@@ -217,7 +293,25 @@ export default function PresupuestadorScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: t.bg }}>
-      <AppHeader title="Presupuestador" />
+      <AppHeader
+        title="Presupuestador"
+        left={
+          <Pressable onPress={() => navigation.goBack()} style={s.hLeft} hitSlop={10}>
+            <Icon name="back" size={22} color={t.onPrimary} />
+            <Text style={s.hTitle}>Presupuestador</Text>
+          </Pressable>
+        }
+        right={
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 18 }}>
+            <Pressable hitSlop={8} onPress={nuevo}>
+              <Icon name="plus" size={23} color={t.onPrimary} />
+            </Pressable>
+            <Pressable hitSlop={8} onPress={abrirGuardados}>
+              <Icon name="file" size={21} color={t.onPrimary} />
+            </Pressable>
+          </View>
+        }
+      />
 
       {cargando ? (
         <View style={s.center}>
@@ -359,6 +453,17 @@ export default function PresupuestadorScreen() {
           <View style={s.totalRow}>
             <Text style={s.totalLbl}>TOTAL PRESUPUESTO</Text>
             <Text style={s.totalVal}>{pesos(totalGeneral)}</Text>
+          </View>
+
+          <View style={s.acciones}>
+            <Pressable style={s.accGuardar} onPress={guardar}>
+              <Icon name="check" size={18} color={t.onPrimary} />
+              <Text style={s.accGuardarTxt}>Guardar</Text>
+            </Pressable>
+            <Pressable style={s.accCompartir} onPress={compartir}>
+              <Icon name="logout" size={17} color={t.text} />
+              <Text style={s.accCompartirTxt}>Compartir</Text>
+            </Pressable>
           </View>
         </ScrollView>
       )}
@@ -562,6 +667,39 @@ export default function PresupuestadorScreen() {
           </View>
         </KeyboardAvoidingView>
       </Modal>
+
+      {/* Modal: mis presupuestos guardados */}
+      <Modal visible={showGuardados} animationType="slide" transparent onRequestClose={() => setShowGuardados(false)}>
+        <View style={s.modalBg}>
+          <Pressable style={{ flex: 1 }} onPress={() => setShowGuardados(false)} />
+          <View style={[s.modalCard, { paddingBottom: insets.bottom + spacing.md }]}>
+            <View style={s.modalHead}>
+              <Text style={s.modalTitle}>Mis presupuestos</Text>
+              <Pressable onPress={() => setShowGuardados(false)} hitSlop={8}>
+                <Icon name="close" size={22} color={t.text} />
+              </Pressable>
+            </View>
+            <ScrollView style={{ maxHeight: 420, marginTop: spacing.sm }} showsVerticalScrollIndicator={false}>
+              {guardados.length === 0 && <Text style={s.vacio}>Todavía no guardaste ningún presupuesto.</Text>}
+              {guardados.map((p) => (
+                <View key={p.id} style={s.gRow}>
+                  <Pressable style={{ flex: 1 }} onPress={() => cargar(p)}>
+                    <Text style={s.gNom} numberOfLines={1}>
+                      {p.nombre}
+                    </Text>
+                    <Text style={s.gMeta}>
+                      {fmtFecha(p.fecha)} · {p.lineas.length} ítem{p.lineas.length === 1 ? '' : 's'} · {pesos(p.total)}
+                    </Text>
+                  </Pressable>
+                  <Pressable onPress={() => borrar(p.id)} hitSlop={8}>
+                    <Icon name="trash" size={18} color={t.text3} />
+                  </Pressable>
+                </View>
+              ))}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </View>
   )
 }
@@ -570,6 +708,16 @@ const styles = (t: Theme) =>
   StyleSheet.create({
     center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing.sm },
     cargTxt: { color: t.text2, fontSize: 14 },
+    hLeft: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+    hTitle: { color: t.onPrimary, fontSize: 20, fontWeight: '900', letterSpacing: -0.4 },
+    acciones: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.md },
+    accGuardar: { flex: 1.4, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, height: 50, borderRadius: radius.md, backgroundColor: t.primary },
+    accGuardarTxt: { color: t.onPrimary, fontSize: 15, fontWeight: '800' },
+    accCompartir: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, height: 50, borderRadius: radius.md, borderWidth: 1, borderColor: t.border, backgroundColor: t.surface },
+    accCompartirTxt: { color: t.text, fontSize: 15, fontWeight: '800' },
+    gRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, backgroundColor: t.surface, borderWidth: 1, borderColor: t.border, borderRadius: radius.md, padding: spacing.md, marginBottom: 6 },
+    gNom: { color: t.text, fontSize: 15, fontWeight: '800' },
+    gMeta: { color: t.text3, fontSize: 12, marginTop: 3 },
     tituloSec: { color: t.text, fontSize: 16, fontWeight: '900', marginBottom: spacing.sm },
     obra: { flexDirection: 'row', gap: spacing.md },
     miniLabel: { color: t.text2, fontSize: 12, fontWeight: '700', marginBottom: 4 },
