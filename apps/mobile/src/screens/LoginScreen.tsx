@@ -6,8 +6,8 @@ import { LogoObrador } from '../components/LogoObrador'
 import { useTheme, spacing, radius, Theme } from '../lib/theme'
 import { useAuth } from '../lib/auth'
 
-const TERMINOS_URL = 'https://obrador.com.ar/terminos' // TODO: reemplazar por la URL real (Etapa 3)
-const PRIVACIDAD_URL = 'https://obrador.com.ar/privacidad'
+const TERMINOS_URL = 'https://renepariguana.github.io/obrador/terminos.html'
+const PRIVACIDAD_URL = 'https://renepariguana.github.io/obrador/privacidad.html'
 
 type Modo = 'inicial' | 'email'
 

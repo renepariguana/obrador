@@ -9,7 +9,7 @@
     "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.manosalaobra.app",
+      "bundleIdentifier": "com.obrador.app",
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "Usamos tu ubicación para mostrarte pedidos y profesionales cerca tuyo.",
         "NSCameraUsageDescription": "Usás la cámara para subir fotos de tus trabajos.",
@@ -17,7 +17,7 @@
       }
     },
     "android": {
-      "package": "com.manosalaobra.app",
+      "package": "com.obrador.app",
       "permissions": ["ACCESS_FINE_LOCATION", "CAMERA"],
       "adaptiveIcon": {
         "backgroundColor": "#FFBF00",

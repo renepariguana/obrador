@@ -90,12 +90,9 @@ export default function InicioScreen() {
     getProveedores('Tucumán').then(setProvs)
   }, [])
 
-  const SectionHeader = ({ title, action = 'Ver todos' }: { title: string; action?: string }) => (
+  const SectionHeader = ({ title }: { title: string }) => (
     <View style={s.sectionRow}>
       <Text style={s.section}>{title}</Text>
-      <Pressable>
-        <Text style={s.verMas}>{action}</Text>
-      </Pressable>
     </View>
   )
 

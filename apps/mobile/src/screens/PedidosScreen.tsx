@@ -99,15 +99,20 @@ export default function PedidosScreen() {
       <AppHeader
         title={tab === 'publicar' ? 'Publicá tu pedido' : 'Mis pedidos'}
         right={
-          tab === 'publicar' ? (
-            <Pressable hitSlop={8} onPress={() => setTab('mis')}>
-              <Icon name="hand" size={23} color={t.onPrimary} />
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 18 }}>
+            <Pressable hitSlop={8} onPress={() => navigation.navigate('Presupuestador')}>
+              <Icon name="coin" size={23} color={t.onPrimary} />
             </Pressable>
-          ) : (
-            <Pressable hitSlop={8} onPress={() => setTab('publicar')}>
-              <Icon name="plus" size={24} color={t.onPrimary} />
-            </Pressable>
-          )
+            {tab === 'publicar' ? (
+              <Pressable hitSlop={8} onPress={() => setTab('mis')}>
+                <Icon name="hand" size={23} color={t.onPrimary} />
+              </Pressable>
+            ) : (
+              <Pressable hitSlop={8} onPress={() => setTab('publicar')}>
+                <Icon name="plus" size={24} color={t.onPrimary} />
+              </Pressable>
+            )}
+          </View>
         }
       />
 

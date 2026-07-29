@@ -16,6 +16,7 @@ import TrabajosScreen from './src/screens/TrabajosScreen'
 import DetallePedidoScreen from './src/screens/DetallePedidoScreen'
 import PublicarPedidoScreen from './src/screens/PublicarPedidoScreen'
 import MisPedidosScreen from './src/screens/MisPedidosScreen'
+import PedidosScreen from './src/screens/PedidosScreen'
 import PresupuestadorScreen from './src/screens/PresupuestadorScreen'
 import MiPerfilScreen from './src/screens/MiPerfilScreen'
 import BloqueadosScreen from './src/screens/BloqueadosScreen'
@@ -66,6 +67,16 @@ function TrabajosStack() {
   )
 }
 
+function PedidosStack() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="PedidosHome" component={PedidosScreen} />
+      <Stack.Screen name="Presupuestador" component={PresupuestadorScreen} />
+      <Stack.Screen name="DetallePedido" component={DetallePedidoScreen} />
+    </Stack.Navigator>
+  )
+}
+
 function MiPerfilStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
@@ -83,7 +94,7 @@ const TABS: { name: string; comp: React.ComponentType; icon: IconName; iconOn?: 
   { name: 'Inicio', comp: InicioStack, icon: 'home', iconOn: 'homeFill' },
   { name: 'Materiales', comp: MaterialesStack, icon: 'container', iconOn: 'containerFill' },
   { name: 'Trabajos', comp: TrabajosStack, icon: 'hand', iconOn: 'hand' },
-  { name: 'Presupuestador', comp: PresupuestadorScreen, icon: 'chat', iconOn: 'chatFill' },
+  { name: 'Pedidos', comp: PedidosStack, icon: 'chat', iconOn: 'chatFill' },
   { name: 'Mi perfil', comp: MiPerfilStack, icon: 'user', iconOn: 'userFill' },
 ]
 
