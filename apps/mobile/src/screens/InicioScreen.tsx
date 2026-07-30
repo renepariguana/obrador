@@ -26,43 +26,6 @@ const OFICIOS: Oficio[] = [
   { label: 'Fletero', icon: 'truck' },
 ]
 
-type Pro = { nombre: string; oficio: string; rating: number; verificado: boolean }
-const PROS: Pro[] = [
-  { nombre: 'Carlos G.', oficio: 'Plomero', rating: 4.9, verificado: true },
-  { nombre: 'Marta R.', oficio: 'Pintora', rating: 4.7, verificado: true },
-  { nombre: 'Diego S.', oficio: 'Electricista', rating: 4.6, verificado: false },
-  { nombre: 'Ana P.', oficio: 'Albañil', rating: 4.8, verificado: true },
-]
-
-type Trabajo = {
-  titulo: string
-  oficio: string
-  icon: IconName
-  badge: string
-  urgente?: boolean
-  dist: string
-  pres: string
-  postulados: number
-}
-const TRABAJOS: Trabajo[] = [
-  { titulo: 'Pintar living y comedor', oficio: 'Pintor', icon: 'roller', badge: 'Bien pago', dist: '0,8 km', pres: '$45.000', postulados: 2 },
-  { titulo: 'Pérdida de agua en cocina', oficio: 'Plomero', icon: 'wrench', badge: 'Urgente', urgente: true, dist: '0,6 km', pres: '$12.000', postulados: 2 },
-  { titulo: 'Instalar tablero eléctrico', oficio: 'Electricista', icon: 'zap', badge: 'Hoy', dist: '1,2 km', pres: '$30.000', postulados: 1 },
-]
-
-const URGENTES: Trabajo[] = [
-  { titulo: 'Destapar cloaca', oficio: 'Plomero', icon: 'wrench', badge: 'Urgente', urgente: true, dist: '0,4 km', pres: '$18.000', postulados: 0 },
-  { titulo: 'Cortocircuito en tablero', oficio: 'Electricista', icon: 'zap', badge: 'Urgente', urgente: true, dist: '1,0 km', pres: '$25.000', postulados: 1 },
-  { titulo: 'Filtración en el techo', oficio: 'Zinguero', icon: 'home', badge: 'Urgente', urgente: true, dist: '2,1 km', pres: '$40.000', postulados: 0 },
-]
-
-const TOP_PROS: Pro[] = [
-  { nombre: 'Roberto M.', oficio: 'Electricista', rating: 5.0, verificado: true },
-  { nombre: 'Lucía F.', oficio: 'Pintora', rating: 4.9, verificado: true },
-  { nombre: 'Jorge V.', oficio: 'Carpintero', rating: 4.9, verificado: true },
-  { nombre: 'Sofía T.', oficio: 'Plomera', rating: 4.8, verificado: true },
-]
-
 export default function InicioScreen() {
   const t = useTheme()
   const insets = useSafeAreaInsets()
@@ -96,35 +59,6 @@ export default function InicioScreen() {
     </View>
   )
 
-  const renderTrabajos = (list: Trabajo[]) => (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.strip}>
-      {list.map((j) => (
-        <Pressable key={j.titulo} style={s.jobCard}>
-          <View style={s.jobHeader}>
-            <Icon name={j.icon} size={40} color={t.text3} />
-            <View style={[s.badge, j.urgente ? s.badgeDanger : s.badgePrimary]}>
-              <Text style={[s.badgeTxt, { color: j.urgente ? t.bg : t.onPrimary }]}>{j.badge}</Text>
-            </View>
-          </View>
-          <View style={s.jobBody}>
-            <Text style={s.jobTitle} numberOfLines={1}>
-              {j.titulo}
-            </Text>
-            <View style={s.jobMetaRow}>
-              <Icon name="pin" size={13} color={t.text3} />
-              <Text style={s.jobMeta}>
-                {j.dist} · {j.oficio}
-              </Text>
-            </View>
-            <View style={s.jobFoot}>
-              <Text style={s.jobPres}>{j.pres}</Text>
-              <Text style={s.jobPost}>{j.postulados} postulados</Text>
-            </View>
-          </View>
-        </Pressable>
-      ))}
-    </ScrollView>
-  )
 
   const renderPros = (list: Trabajador[]) => (
     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.strip}>
