@@ -24,6 +24,13 @@ export async function calificar(
   return {}
 }
 
+// Reputación de un usuario (cliente o profesional): promedio de estrellas recibidas + cantidad.
+export async function ratingDe(userId: string): Promise<{ rating: number; reviews: number }> {
+  const { data } = await supabase.from('reviews').select('estrellas').eq('destinatario_id', userId)
+  if (!data || !data.length) return { rating: 0, reviews: 0 }
+  return { rating: data.reduce((a, r) => a + (r.estrellas || 0), 0) / data.length, reviews: data.length }
+}
+
 // ¿El usuario logueado ya dejó una reseña para este pedido?
 export async function yaCalifique(pedidoId: string): Promise<boolean> {
   const { data: auth } = await supabase.auth.getUser()

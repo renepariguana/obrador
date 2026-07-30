@@ -11,7 +11,7 @@ import {
   elegir,
   completarPedido,
 } from '../data/pedidosApi'
-import { calificar, yaCalifique } from '../data/reviewsApi'
+import { calificar, yaCalifique, ratingDe } from '../data/reviewsApi'
 import { ReportarSheet } from '../components/ReportarSheet'
 import { bloquear } from '../data/bloqueosApi'
 import { useGate } from '../lib/gate'
@@ -50,6 +50,12 @@ export default function DetallePedidoScreen({ route, navigation }: any) {
   // Moderación (vista del trabajador)
   const [reportOpen, setReportOpen] = useState(false)
   const clienteId: string | undefined = raw.clienteId
+
+  // Reputación del cliente (para que el profesional sepa con quién trata)
+  const [clienteRating, setClienteRating] = useState<{ rating: number; reviews: number } | null>(null)
+  useEffect(() => {
+    if (!dueno && clienteId) ratingDe(clienteId).then(setClienteRating)
+  }, [dueno, clienteId])
 
   const bloquearCliente = () =>
     Alert.alert(`¿Bloquear a ${raw.cliente || 'este cliente'}?`, 'No vas a ver más sus pedidos.', [
@@ -173,6 +179,19 @@ export default function DetallePedidoScreen({ route, navigation }: any) {
           <View style={{ flex: 1 }}>
             <Text style={s.cliente}>{titulo}</Text>
             <Text style={s.meta}>{zona}</Text>
+            {!dueno &&
+              clienteRating &&
+              (clienteRating.reviews > 0 ? (
+                <View style={s.cliRating}>
+                  <Icon name="star" size={13} color={t.rating} />
+                  <Text style={s.cliRatingNum}>{clienteRating.rating.toFixed(1)}</Text>
+                  <Text style={s.cliRatingMeta}>
+                    · {clienteRating.reviews} reseña{clienteRating.reviews === 1 ? '' : 's'}
+                  </Text>
+                </View>
+              ) : (
+                <Text style={[s.cliRatingMeta, { marginTop: 3 }]}>Cliente sin reseñas aún</Text>
+              ))}
           </View>
           <View style={s.tag}>
             <Text style={s.tagTxt}>{oficio}</Text>
@@ -366,6 +385,9 @@ const styles = (t: Theme) =>
     avatar: { width: 52, height: 52, borderRadius: 26, backgroundColor: t.surface2, alignItems: 'center', justifyContent: 'center' },
     cliente: { color: t.text, fontSize: 17, fontWeight: '900' },
     meta: { color: t.text2, fontSize: 13, marginTop: 2 },
+    cliRating: { flexDirection: 'row', alignItems: 'center', gap: 3, marginTop: 3 },
+    cliRatingNum: { color: t.text, fontSize: 13, fontWeight: '800' },
+    cliRatingMeta: { color: t.text3, fontSize: 12 },
     tag: { backgroundColor: t.surface2, borderRadius: radius.pill, paddingHorizontal: 10, paddingVertical: 5 },
     tagTxt: { color: t.text2, fontSize: 11, fontWeight: '800' },
     urgente: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: t.surface2, alignSelf: 'flex-start', marginHorizontal: spacing.lg, borderRadius: radius.pill, paddingHorizontal: spacing.md, paddingVertical: 6 },
