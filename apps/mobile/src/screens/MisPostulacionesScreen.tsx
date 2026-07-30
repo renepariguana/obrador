@@ -1,10 +1,63 @@
-import React, { useState, useCallback } from 'react'
-import { View, Text, ScrollView, Pressable, StyleSheet, ActivityIndicator } from 'react-native'
+import React, { useState, useCallback, useEffect } from 'react'
+import { View, Text, ScrollView, Pressable, StyleSheet, ActivityIndicator, TextInput, Alert } from 'react-native'
 import { useFocusEffect } from '@react-navigation/native'
 import { AppHeader } from '../components/AppHeader'
 import { Icon } from '../components/Icon'
 import { useTheme, spacing, radius, Theme } from '../lib/theme'
 import { MiPostulacion, misPostulaciones, EstadoPostulacion } from '../data/pedidosApi'
+import { calificar, yaCalifique } from '../data/reviewsApi'
+
+// El profesional elegido califica al cliente cuando el trabajo quedó completado.
+function CalificarCliente({ pedidoId, clienteId, cliente, s, t }: { pedidoId: string; clienteId: string; cliente: string; s: any; t: any }) {
+  const [calificado, setCalificado] = useState(false)
+  const [estrellas, setEstrellas] = useState(0)
+  const [comentario, setComentario] = useState('')
+  const [enviando, setEnviando] = useState(false)
+
+  useEffect(() => {
+    yaCalifique(pedidoId).then(setCalificado)
+  }, [pedidoId])
+
+  const enviar = async () => {
+    if (estrellas < 1) return Alert.alert('Elegí una puntuación', 'Tocá las estrellas para calificar al cliente.')
+    setEnviando(true)
+    const r = await calificar(pedidoId, clienteId, estrellas, comentario)
+    setEnviando(false)
+    if (r.error) return Alert.alert('No se pudo enviar', r.error)
+    setCalificado(true)
+  }
+
+  const nombre = cliente.split(' ')[0]
+  return (
+    <View style={s.calif}>
+      {calificado ? (
+        <Text style={s.califOk}>¡Gracias por calificar a {nombre}!</Text>
+      ) : (
+        <>
+          <Text style={s.califLbl}>¿Cómo fue trabajar con {nombre}?</Text>
+          <View style={s.stars}>
+            {[1, 2, 3, 4, 5].map((n) => (
+              <Pressable key={n} onPress={() => setEstrellas(n)} hitSlop={4}>
+                <Icon name="star" size={30} color={n <= estrellas ? t.rating : t.border} />
+              </Pressable>
+            ))}
+          </View>
+          <TextInput
+            style={s.califInput}
+            placeholder="Comentario (opcional)"
+            placeholderTextColor={t.text3}
+            value={comentario}
+            onChangeText={setComentario}
+            multiline
+          />
+          <Pressable style={[s.califBtn, (estrellas < 1 || enviando) && s.califBtnOff]} disabled={estrellas < 1 || enviando} onPress={enviar}>
+            {enviando ? <ActivityIndicator color={t.onPrimary} /> : <Text style={s.califBtnTxt}>Enviar reseña</Text>}
+          </Pressable>
+        </>
+      )}
+    </View>
+  )
+}
 
 function fecha(iso: string) {
   try {
@@ -68,6 +121,9 @@ export default function MisPostulacionesScreen({ navigation }: any) {
                   </View>
                 </View>
                 <Text style={s.cardMeta}>{(p.zona || 'Sin zona') + ' · ' + fecha(p.creado_at)}</Text>
+                {p.estadoPostulacion === 'elegido' && p.estadoPedido === 'completado' && (
+                  <CalificarCliente pedidoId={p.pedidoId} clienteId={p.clienteId} cliente={p.cliente} s={s} t={t} />
+                )}
               </View>
             )
           })
@@ -89,4 +145,12 @@ const styles = (t: Theme) =>
     badge: { borderRadius: radius.pill, paddingHorizontal: 10, paddingVertical: 4 },
     badgeTxt: { fontSize: 11, fontWeight: '800' },
     cardMeta: { color: t.text3, fontSize: 12, marginTop: 4 },
+    calif: { marginTop: spacing.md, borderTopWidth: 1, borderTopColor: t.border, paddingTop: spacing.md, gap: spacing.sm },
+    califOk: { color: t.text2, fontSize: 14, fontWeight: '700' },
+    califLbl: { color: t.text, fontSize: 14, fontWeight: '800' },
+    stars: { flexDirection: 'row', gap: 6 },
+    califInput: { backgroundColor: t.bg, borderWidth: 1, borderColor: t.border, borderRadius: radius.md, minHeight: 44, paddingHorizontal: spacing.md, paddingTop: 10, color: t.text, fontSize: 14, textAlignVertical: 'top' },
+    califBtn: { height: 46, borderRadius: radius.md, backgroundColor: t.primary, alignItems: 'center', justifyContent: 'center' },
+    califBtnOff: { backgroundColor: t.surface2 },
+    califBtnTxt: { color: t.onPrimary, fontSize: 15, fontWeight: '800' },
   })

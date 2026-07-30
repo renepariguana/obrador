@@ -178,6 +178,8 @@ export async function pedidosAbiertos(oficios?: string[]): Promise<PedidoVista[]
 
 export type MiPostulacion = {
   pedidoId: string
+  clienteId: string
+  cliente: string
   oficio: string
   zona: string | null
   estadoPedido: EstadoPedido
@@ -192,19 +194,28 @@ export async function misPostulaciones(): Promise<MiPostulacion[]> {
   if (!auth.user) return []
   const { data } = await supabase
     .from('postulaciones')
-    .select('estado, creado_at, pedido:pedidos!pedido_id(id, oficio, zona, estado)')
+    .select('estado, creado_at, pedido:pedidos!pedido_id(id, oficio, zona, estado, cliente_id, cliente:profiles!cliente_id(nombre))')
     .eq('trabajador_id', auth.user.id)
     .order('creado_at', { ascending: false })
   return (
     (data as unknown as Array<{
       estado: EstadoPostulacion
       creado_at: string
-      pedido: { id: string; oficio: string; zona: string | null; estado: EstadoPedido } | null
+      pedido: {
+        id: string
+        oficio: string
+        zona: string | null
+        estado: EstadoPedido
+        cliente_id: string
+        cliente: { nombre: string } | null
+      } | null
     }>) || []
   )
     .filter((r) => r.pedido)
     .map((r) => ({
       pedidoId: r.pedido!.id,
+      clienteId: r.pedido!.cliente_id,
+      cliente: r.pedido!.cliente?.nombre || 'Cliente',
       oficio: r.pedido!.oficio,
       zona: r.pedido!.zona,
       estadoPedido: r.pedido!.estado,
