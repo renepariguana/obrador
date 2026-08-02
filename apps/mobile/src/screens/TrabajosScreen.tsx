@@ -9,6 +9,8 @@ import { useTheme, spacing, radius, Theme } from '../lib/theme'
 import { pedidosAbiertos, PedidoVista } from '../data/pedidosApi'
 import { useZona } from '../lib/zona'
 import { useMiUbicacion } from '../lib/ubicacion'
+import { useAuth } from '../lib/auth'
+import { RegistroCTA } from '../components/RegistroCTA'
 
 const FILTROS = ['Todos', 'Mi rubro', 'Urgentes', 'Hoy']
 const { width } = Dimensions.get('window')
@@ -20,6 +22,7 @@ export default function TrabajosScreen() {
   const { zona } = useZona()
   const miUbic = useMiUbicacion()
   const navigation = useNavigation<any>()
+  const { logueado } = useAuth()
   const [filtros, setFiltros] = useState<Filtros>({ zona: null, rubro: null, urgente: false })
   const [showFiltros, setShowFiltros] = useState(false)
   const [filtro, setFiltro] = useState('Todos')
@@ -57,6 +60,14 @@ export default function TrabajosScreen() {
   const onCardScroll = (x: number) => {
     const i = Math.max(0, Math.min(PEDIDOS.length - 1, Math.round(x / width)))
     if (i !== sel) setSel(i)
+  }
+
+  if (!logueado) {
+    return (
+      <View style={{ flex: 1, backgroundColor: t.bg, justifyContent: 'center' }}>
+        <RegistroCTA texto="Registrate para ver los pedidos abiertos cerca tuyo y postularte." />
+      </View>
+    )
   }
 
   return (

@@ -11,6 +11,8 @@ import { pedidosAbiertos, PedidoVista } from '../data/pedidosApi'
 import { getProveedores } from '../data/materialesApi'
 import { useZona } from '../lib/zona'
 import { useMiUbicacion } from '../lib/ubicacion'
+import { useAuth } from '../lib/auth'
+import { RegistroCTA } from '../components/RegistroCTA'
 
 type Oficio = { label: string; icon: IconName }
 const OFICIOS: Oficio[] = [
@@ -33,6 +35,7 @@ export default function InicioScreen() {
   const navigation = useNavigation<any>()
   const { zona } = useZona()
   const miUbic = useMiUbicacion()
+  const { logueado } = useAuth()
   const [showUbic, setShowUbic] = useState(false)
   const [pedidos, setPedidos] = useState<PedidoVista[]>([])
   const [provs, setProvs] = useState<{ nombre: string; slug: string; logo: string | null }[]>([])
@@ -200,7 +203,9 @@ export default function InicioScreen() {
 
         {/* ===== PROFESIONALES ===== */}
         <SectionHeader title="Profesionales cerca tuyo" />
-        {prosLoading ? (
+        {!logueado ? (
+          <RegistroCTA texto="Registrate para ver los profesionales cerca tuyo y contactarlos." />
+        ) : prosLoading ? (
           <ActivityIndicator color={t.text3} style={{ marginVertical: spacing.lg }} />
         ) : pros.length === 0 ? (
           <Text style={s.emptyPros}>
