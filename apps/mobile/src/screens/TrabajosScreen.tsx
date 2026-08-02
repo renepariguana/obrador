@@ -62,18 +62,12 @@ export default function TrabajosScreen() {
     if (i !== sel) setSel(i)
   }
 
-  if (!logueado) {
-    return (
-      <View style={{ flex: 1, backgroundColor: t.bg, justifyContent: 'center' }}>
-        <RegistroCTA texto="Registrate para ver los pedidos abiertos cerca tuyo y postularte." />
-      </View>
-    )
-  }
-
   return (
     <View style={{ flex: 1, backgroundColor: t.bg }}>
       <MapaPedidos fill pedidos={PEDIDOS} selected={sel} onSelect={onMapSelect} me={miUbic} />
 
+      {logueado && (
+        <>
       {/* ===== Overlays superiores ===== */}
       <View style={[s.top, { paddingTop: insets.top + 8 }]} pointerEvents="box-none">
         <View style={s.searchRow}>
@@ -181,6 +175,14 @@ export default function TrabajosScreen() {
           </>
         )}
       </View>
+        </>
+      )}
+
+      {!logueado && (
+        <View style={s.ctaOverlay}>
+          <RegistroCTA texto="Registrate para ver los pedidos abiertos cerca tuyo y postularte." />
+        </View>
+      )}
 
       <FiltrosSheet
         visible={showFiltros}
@@ -198,6 +200,7 @@ export default function TrabajosScreen() {
 const styles = (t: Theme) =>
   StyleSheet.create({
     top: { position: 'absolute', top: 0, left: 0, right: 0, paddingHorizontal: spacing.md },
+    ctaOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.45)', alignItems: 'center', justifyContent: 'center' },
     searchRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
     search: {
       flex: 1,
