@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Obrador",
-    "slug": "manos-a-la-obra",
+    "slug": "obrador",
     "version": "1.0.0",
     "scheme": "obrador",
     "orientation": "portrait",
@@ -18,7 +18,10 @@
     },
     "android": {
       "package": "com.obrador.app",
-      "permissions": ["ACCESS_FINE_LOCATION", "CAMERA"],
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "CAMERA"
+      ],
       "adaptiveIcon": {
         "backgroundColor": "#FFBF00",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -32,7 +35,11 @@
     },
     "extra": {
       "supabaseUrl": "",
-      "supabaseAnonKey": ""
-    }
+      "supabaseAnonKey": "",
+      "eas": {
+        "projectId": "2f6d1b84-cd8d-455e-8933-726f5d3b43d7"
+      }
+    },
+    "owner": "logarquitectura"
   }
 }
