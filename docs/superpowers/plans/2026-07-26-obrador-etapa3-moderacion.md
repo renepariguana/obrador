@@ -53,6 +53,6 @@
 - Modify: `apps/mobile/src/screens/MiPerfilScreen.tsx` (links)
 
 - [ ] Páginas estáticas (español, a medida de Obrador, paleta amarillo/negro): qué datos se recogen
-  (email, nombre, teléfono, zona), Supabase, sin pagos, cómo borrar cuenta, contacto renepariguana@gmail.com.
+  (email, nombre, teléfono, zona), Supabase, sin pagos, cómo borrar cuenta, contacto estudiologarquitectura@gmail.com.
 - [ ] Links "Términos y condiciones" y "Política de privacidad" en `MiPerfil` → `Linking.openURL`.
 - [ ] René: crear repo GitHub + activar Pages; pegar la URL final en la app.

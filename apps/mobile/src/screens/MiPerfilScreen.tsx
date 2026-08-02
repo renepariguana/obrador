@@ -112,7 +112,7 @@ export default function MiPerfilScreen() {
 
           <View style={s.gGap} />
 
-          <Pressable style={s.gRow} onPress={() => Linking.openURL('mailto:renepariguana@gmail.com?subject=Ayuda Obrador')}>
+          <Pressable style={s.gRow} onPress={() => Linking.openURL('mailto:estudiologarquitectura@gmail.com?subject=Ayuda Obrador')}>
             <Icon name="mail" size={22} color={t.text} />
             <Text style={s.gLabel}>Ayuda</Text>
             <Icon name="chevron" size={18} color={t.text3} />
@@ -152,7 +152,7 @@ export default function MiPerfilScreen() {
         {/* Accesos rápidos */}
         <View style={s.tiles}>
           <Tile icon="user" label="Datos personales" onPress={() => setEditOpen(true)} />
-          <Tile icon="phone" label="Ayuda" onPress={() => Linking.openURL('mailto:renepariguana@gmail.com?subject=Ayuda Obrador')} />
+          <Tile icon="phone" label="Ayuda" onPress={() => Linking.openURL('mailto:estudiologarquitectura@gmail.com?subject=Ayuda Obrador')} />
         </View>
 
         {/* Actividad */}

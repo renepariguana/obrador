@@ -13,17 +13,13 @@
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "Usamos tu ubicación para mostrarte pedidos y profesionales cerca tuyo.",
         "NSCameraUsageDescription": "Usás la cámara para subir fotos de tus trabajos.",
-        "NSPhotoLibraryUsageDescription": "Elegís fotos de tu galería para tus trabajos y perfil."
+        "NSPhotoLibraryUsageDescription": "Elegís fotos de tu galería para tus trabajos y perfil.",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
       "package": "com.obrador.app",
-      "permissions": [
-        "ACCESS_FINE_LOCATION",
-        "CAMERA",
-        "ACCESS_FINE_LOCATION",
-        "CAMERA"
-      ],
+      "permissions": ["ACCESS_FINE_LOCATION", "CAMERA"],
       "adaptiveIcon": {
         "backgroundColor": "#FFBF00",
         "foregroundImage": "./assets/android-icon-foreground.png",
