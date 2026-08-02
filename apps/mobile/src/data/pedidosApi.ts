@@ -28,6 +28,11 @@ export async function publicarPedido(p: {
 }): Promise<{ error?: string; id?: string }> {
   const { data: auth } = await supabase.auth.getUser()
   if (!auth.user) return { error: 'Iniciá sesión para publicar' }
+  // Privacidad: guardamos la ubicación ya aproximada (~100 m), nunca la exacta.
+  // Nadie —ni con la anon key— puede leer la dirección real del cliente.
+  let lat: number | null = null
+  let lng: number | null = null
+  if (p.lat != null && p.lng != null) [lat, lng] = aproximar(p.lat, p.lng)
   const { data, error } = await supabase
     .from('pedidos')
     .insert({
@@ -35,8 +40,8 @@ export async function publicarPedido(p: {
       oficio: p.oficio,
       descripcion: p.descripcion,
       zona: p.zona,
-      lat: p.lat ?? null,
-      lng: p.lng ?? null,
+      lat,
+      lng,
       fotos: p.fotos ?? [],
       estado: 'abierto',
     })
