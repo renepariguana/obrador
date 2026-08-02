@@ -12,6 +12,7 @@ import {
   completarPedido,
 } from '../data/pedidosApi'
 import { calificar, yaCalifique, ratingDe } from '../data/reviewsApi'
+import { contactoDe } from '../data/perfilApi'
 import { ReportarSheet } from '../components/ReportarSheet'
 import { bloquear } from '../data/bloqueosApi'
 import { useGate } from '../lib/gate'
@@ -143,10 +144,11 @@ export default function DetallePedidoScreen({ route, navigation }: any) {
     ])
   }
 
-  const contactar = (p: Postulacion) => {
-    const wpp = (p.whatsapp || '').replace(/\D/g, '')
+  const contactar = async (p: Postulacion) => {
+    const { telefono, whatsapp } = await contactoDe(p.trabajador_id)
+    const wpp = (whatsapp || '').replace(/\D/g, '')
     if (wpp) Linking.openURL(`https://wa.me/54${wpp}`)
-    else if (p.telefono) Linking.openURL(`tel:${p.telefono}`)
+    else if (telefono) Linking.openURL(`tel:${telefono}`)
     else Alert.alert('Sin contacto', 'Este profesional todavía no cargó su teléfono.')
   }
 

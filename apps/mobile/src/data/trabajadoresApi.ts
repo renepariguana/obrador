@@ -28,7 +28,7 @@ type OficioRow = {
     puntos: number
     activo: boolean
     descripcion: string | null
-    profiles: { nombre: string; zona: string | null; telefono: string | null; whatsapp: string | null } | null
+    profiles: { nombre: string; zona: string | null } | null
   } | null
 }
 
@@ -50,7 +50,7 @@ export async function listarTrabajadores(oficio: string): Promise<Trabajador[]> 
   const { data, error } = await supabase
     .from('trabajador_oficios')
     .select(
-      'oficio, zona, trabajadores!inner(profile_id, verificado, puntos, activo, descripcion, profiles!inner(nombre, zona, telefono, whatsapp))',
+      'oficio, zona, trabajadores!inner(profile_id, verificado, puntos, activo, descripcion, profiles!inner(nombre, zona))',
     )
     .ilike('oficio', oficio)
     .limit(200)
@@ -72,8 +72,6 @@ export async function listarTrabajadores(oficio: string): Promise<Trabajador[]> 
       verificado: !!tr.verificado,
       zona: r.zona || tr.profiles?.zona || null,
       dist: '',
-      telefono: tr.profiles?.telefono,
-      whatsapp: tr.profiles?.whatsapp,
     })
   }
   await completarRatings(out)
@@ -85,7 +83,7 @@ export async function listarDestacados(limite = 8): Promise<Trabajador[]> {
   const { data, error } = await supabase
     .from('trabajador_oficios')
     .select(
-      'oficio, zona, trabajadores!inner(profile_id, verificado, puntos, activo, descripcion, profiles!inner(nombre, zona, telefono, whatsapp))',
+      'oficio, zona, trabajadores!inner(profile_id, verificado, puntos, activo, descripcion, profiles!inner(nombre, zona))',
     )
     .limit(200)
   if (error || !data) return []
@@ -106,8 +104,6 @@ export async function listarDestacados(limite = 8): Promise<Trabajador[]> {
       verificado: !!tr.verificado,
       zona: r.zona || tr.profiles?.zona || null,
       dist: '',
-      telefono: tr.profiles?.telefono,
-      whatsapp: tr.profiles?.whatsapp,
     })
   }
   await completarRatings(out)
@@ -118,7 +114,7 @@ export async function listarDestacados(limite = 8): Promise<Trabajador[]> {
 export async function getTrabajador(id: string): Promise<{ trabajador: Trabajador; reviews: Review[] } | null> {
   const { data } = await supabase
     .from('trabajadores')
-    .select('profile_id, verificado, puntos, descripcion, profiles!inner(nombre, zona, telefono, whatsapp), trabajador_oficios(oficio)')
+    .select('profile_id, verificado, puntos, descripcion, profiles!inner(nombre, zona), trabajador_oficios(oficio)')
     .eq('profile_id', id)
     .maybeSingle()
   if (!data) return null
@@ -127,7 +123,7 @@ export async function getTrabajador(id: string): Promise<{ trabajador: Trabajado
     verificado: boolean
     puntos: number
     descripcion: string | null
-    profiles: { nombre: string; zona: string | null; telefono: string | null; whatsapp: string | null } | null
+    profiles: { nombre: string; zona: string | null } | null
     trabajador_oficios: { oficio: string }[]
   }
   const { data: rev } = await supabase
@@ -156,8 +152,6 @@ export async function getTrabajador(id: string): Promise<{ trabajador: Trabajado
       zona: d.profiles?.zona || null,
       dist: '',
       descripcion: d.descripcion,
-      telefono: d.profiles?.telefono,
-      whatsapp: d.profiles?.whatsapp,
     },
     reviews,
   }

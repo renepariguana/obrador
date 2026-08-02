@@ -4,6 +4,7 @@ import { AppHeader } from '../components/AppHeader'
 import { Icon } from '../components/Icon'
 import { useTheme, spacing, radius, Theme } from '../lib/theme'
 import { Trabajador, Review, getTrabajador } from '../data/trabajadoresApi'
+import { contactoDe } from '../data/perfilApi'
 import { ReportarSheet } from '../components/ReportarSheet'
 import { bloquear } from '../data/bloqueosApi'
 import { useGate } from '../lib/gate'
@@ -49,10 +50,12 @@ export default function ProfesionalScreen({ route, navigation }: any) {
     )
 
   const contactar = () =>
-    gate('contactar al profesional', () => {
-      const wpp = (pro.whatsapp || '').replace(/\D/g, '')
+    gate('contactar al profesional', async () => {
+      const { telefono, whatsapp } = await contactoDe(pro.id)
+      const wpp = (whatsapp || '').replace(/\D/g, '')
       if (wpp) Linking.openURL(`https://wa.me/54${wpp}`)
-      else if (pro.telefono) Linking.openURL(`tel:${pro.telefono}`)
+      else if (telefono) Linking.openURL(`tel:${telefono}`)
+      else Alert.alert('Sin contacto', 'Este profesional todavía no cargó su teléfono.')
     })
 
   return (

@@ -253,18 +253,17 @@ export type Postulacion = {
   id: string
   trabajador_id: string
   nombre: string
-  telefono: string | null
-  whatsapp: string | null
   mensaje: string | null
   estado: EstadoPostulacion
   creado_at: string
 }
 
 // Postulaciones de un pedido (solo las ve el dueño del pedido, por RLS).
+// El teléfono/WhatsApp del trabajador se obtiene aparte con contactoDe() (privado).
 export async function postulacionesDe(pedidoId: string): Promise<Postulacion[]> {
   const { data } = await supabase
     .from('postulaciones')
-    .select('id, trabajador_id, mensaje, estado, creado_at, trabajador:profiles!trabajador_id(nombre,telefono,whatsapp)')
+    .select('id, trabajador_id, mensaje, estado, creado_at, trabajador:profiles!trabajador_id(nombre)')
     .eq('pedido_id', pedidoId)
     .order('creado_at', { ascending: true })
   return (
@@ -274,14 +273,12 @@ export async function postulacionesDe(pedidoId: string): Promise<Postulacion[]> 
       mensaje: string | null
       estado: EstadoPostulacion
       creado_at: string
-      trabajador: { nombre: string | null; telefono: string | null; whatsapp: string | null } | null
+      trabajador: { nombre: string | null } | null
     }>) || []
   ).map((p) => ({
     id: p.id,
     trabajador_id: p.trabajador_id,
     nombre: p.trabajador?.nombre || 'Profesional',
-    telefono: p.trabajador?.telefono || null,
-    whatsapp: p.trabajador?.whatsapp || null,
     mensaje: p.mensaje,
     estado: p.estado,
     creado_at: p.creado_at,
