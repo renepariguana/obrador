@@ -20,6 +20,8 @@
       "package": "com.obrador.app",
       "permissions": [
         "ACCESS_FINE_LOCATION",
+        "CAMERA",
+        "ACCESS_FINE_LOCATION",
         "CAMERA"
       ],
       "adaptiveIcon": {
@@ -40,6 +42,12 @@
         "projectId": "2f6d1b84-cd8d-455e-8933-726f5d3b43d7"
       }
     },
-    "owner": "logarquitectura"
+    "owner": "logarquitectura",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/2f6d1b84-cd8d-455e-8933-726f5d3b43d7"
+    }
   }
 }
