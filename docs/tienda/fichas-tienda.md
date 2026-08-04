@@ -9,7 +9,7 @@ Idioma principal: **Español (Argentina)**.
 
 ### Título (máx. 30)
 ```
-Obrador: oficios y materiales
+Obrador: Manos a la obra
 ```
 
 ### Descripción corta (máx. 80)
@@ -59,7 +59,7 @@ oficios · plomero · electricista · albañil · pintor · gasista · changas �
 
 ### Nombre (máx. 30)
 ```
-Obrador: Oficios
+Obrador: Manos a la obra
 ```
 
 ### Subtítulo (máx. 30)
