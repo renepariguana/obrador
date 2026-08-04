@@ -115,7 +115,7 @@ Obrador arranca en Tucumán y suma más ciudades de Argentina.
 
 ## Pendientes de estas fichas
 - **Capturas de pantalla** (screenshots): se sacan con la app corriendo en el teléfono/emulador. Google pide mín. 2 (recomendado 4–8) en formato teléfono; Apple pide por tamaño de pantalla (6.7" y 6.5", y 5.5" opcional).
-- **Gráfico destacado (Feature graphic)** de Google Play: 1024×500 px.
+- **Gráfico destacado (Feature graphic)** de Google Play: 1024×500 px ✅ generado en `docs/tienda/feature-graphic.png`.
 - **Ícono de tienda**: ya lo tenemos (el O-pin sobre amarillo, 512×512 para Play / 1024 para Apple).
 - **URL de política de privacidad**: https://renepariguana.github.io/obrador/privacidad.html (ya está online).
 - **Email de soporte**: estudiologarquitectura@gmail.com (temporal, hasta dominio propio).
