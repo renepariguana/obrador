@@ -46,10 +46,7 @@ export default function LoginScreen() {
           <Text style={s.ahoraNoTxt}>Ahora no</Text>
         </Pressable>
         <View style={s.brand}>
-          <View style={s.logo}>
-            <LogoObrador size={74} color={t.onPrimary} />
-          </View>
-          <Text style={s.brandName}>Obrador</Text>
+          <LogoObrador width={232} color={t.onPrimary} bg={t.primary} />
         </View>
       </View>
 
@@ -123,9 +120,7 @@ const styles = (t: Theme) =>
     hero: { backgroundColor: t.primary, borderBottomLeftRadius: 28, borderBottomRightRadius: 28, paddingHorizontal: spacing.lg, paddingBottom: spacing.xl },
     ahoraNo: { alignSelf: 'flex-end' },
     ahoraNoTxt: { color: t.onPrimary, fontSize: 15, fontWeight: '800' },
-    brand: { alignItems: 'center', paddingVertical: spacing.xl, gap: spacing.md },
-    logo: { width: 104, height: 104, borderRadius: 30, backgroundColor: 'rgba(0,0,0,0.12)', alignItems: 'center', justifyContent: 'center' },
-    brandName: { color: t.onPrimary, fontSize: 26, fontWeight: '900', letterSpacing: -0.6 },
+    brand: { alignItems: 'center', paddingVertical: spacing.xl },
     actions: { flex: 1, justifyContent: 'center', paddingHorizontal: spacing.lg, gap: spacing.sm },
     title: { color: t.text, fontSize: 20, fontWeight: '900', textAlign: 'center', marginBottom: spacing.md },
     sub: { color: t.text2, fontSize: 14, textAlign: 'center', marginTop: -spacing.sm, marginBottom: spacing.sm },
