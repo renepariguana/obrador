@@ -93,4 +93,4 @@ eas submit --profile production --platform ios
 - **Supabase**: proyecto `qwxaildshbusqqiugnjf`
 - **EAS**: `@logarquitectura/obrador` (projectId `2f6d1b84-cd8d-455e-8933-726f5d3b43d7`)
 - **Repo**: github.com/renepariguana/obrador
-- **Soporte / contacto**: estudiologarquitectura@gmail.com (temporal)
+- **Soporte / contacto**: obrador.ar@gmail.com (temporal)

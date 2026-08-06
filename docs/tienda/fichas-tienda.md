@@ -14,7 +14,7 @@ Obrador: Manos a la obra
 
 ### Descripción corta (máx. 80)
 ```
-Plomeros, electricistas y más cerca tuyo. Compará el precio de los materiales.
+Mano de obra, proveedores y más cerca tuyo. Compará el precio de los materiales.
 ```
 
 ### Descripción larga (máx. 4000)
@@ -108,7 +108,7 @@ Obrador arranca en Tucumán y suma más ciudades de Argentina.
 
 ## 📝 Notas de la versión (release notes v1.0)
 ```
-¡Primera versión de Obrador! Publicá un pedido, encontrá oficios cerca tuyo, postulate a trabajos y compará el precio de los materiales. Arrancamos en Tucumán. Contanos qué te parece: estudiologarquitectura@gmail.com
+¡Primera versión de Obrador! Publicá un pedido, encontrá oficios cerca tuyo, postulate a trabajos y compará el precio de los materiales. Arrancamos en Tucumán. Contanos qué te parece: obrador.ar@gmail.com
 ```
 
 ---
@@ -118,5 +118,5 @@ Obrador arranca en Tucumán y suma más ciudades de Argentina.
 - **Gráfico destacado (Feature graphic)** de Google Play: 1024×500 px ✅ generado en `docs/tienda/feature-graphic.png`.
 - **Ícono de tienda**: ya lo tenemos (el O-pin sobre amarillo, 512×512 para Play / 1024 para Apple).
 - **URL de política de privacidad**: https://renepariguana.github.io/obrador/privacidad.html (ya está online).
-- **Email de soporte**: estudiologarquitectura@gmail.com (temporal, hasta dominio propio).
+- **Email de soporte**: obrador.ar@gmail.com (temporal, hasta dominio propio).
 - Revisar/ajustar los textos a tu gusto antes de subir.
